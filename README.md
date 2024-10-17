@@ -1,5 +1,6 @@
 # BandMates
-RACCOLTA DEI REQUISIITI:
+RACCOLTA DEI REQUISIITI: 
+
 REQUISITI FUNZIONALI:
 Funzionalità di Messaggistica:
 Messaggistica in tempo reale con notifiche istantanee.
