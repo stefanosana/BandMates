@@ -1,4 +1,23 @@
 # BandMates
+
+PRESENTAZIONE START APP:
+Titolo: BandMates
+Descrizione: BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove 
+collaborazioni. Se sei un musicista in cerca di una band con cui suonare o fai parte di
+ una band che ha bisogno di un nuovo membro, BandMates ti aiuta a trovare la 
+soluzione giusta. Con funzionalità dedicate per mettere in contatto musicisti e band,
+puoi facilmente organizzare sessioni di prova, jam session o collaborazioni future, 
+tutto direttamente dalla piattaforma.
+ "Trova la tua band, crea la tua musica – Unisciti a chi condivide la tua 
+passione!"
+Target: Band e Musicisti
+Problema: Mancanza di gente con cui suonare
+Competitor: Villaggio Musicale, Musiqua, Mercatino Musicale, Showgroup
+Tecnologie: Git
+Repository GitHub: https://github.com/stefanosana/BandMates.git
+Timestamp: 1726737714
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
 RISPOSTE HTTP IN FORMATO JSON
 Login riuscito:
 {
@@ -143,17 +162,9 @@ Feedback inviato con successo:
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-RACCOLTA DEI REQUISIITI: 
+-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+**RACCOLTA DEI REQUISIITI: **
 
 REQUISITI FUNZIONALI:
 Funzionalità di Messaggistica:
