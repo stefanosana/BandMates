@@ -13,7 +13,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Connessione al database SQLite
-const db = new sqlite3.Database('./db/bandmates.db', (err) => {
+const dbPath = path.resolve(__dirname, 'bandmates.db'); // Usa un percorso corretto
+const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Errore di connessione al database:', err.message);
     } else {
@@ -23,13 +24,13 @@ const db = new sqlite3.Database('./db/bandmates.db', (err) => {
 
 // Rotta per gestire la richiesta POST dalla pagina di signup
 app.post('/signup', (req, res) => {
-    const { nome, cognome, email, password, tipoUtente, livelloMusicale, strumenti, genereBand, citta } = req.body;
+    const { name, email, password, is_band, description } = req.body;
 
-    // SQL query per inserire i dati dell'utente nel database
-    const query = `INSERT INTO utenti (nome, cognome, email, password, tipo_utente, livello_musicale, strumenti, genere_band, citta)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    // Assicurati che il nome venga effettivamente passato al database
+    const query = `INSERT INTO users (name, email, password, is_band, description)
+                   VALUES (?, ?, ?, ?, ?)`;
 
-    db.run(query, [nome, cognome, email, password, tipoUtente, livelloMusicale, strumenti, genereBand, citta], function(err) {
+    db.run(query, [name, email, password, is_band, description], function(err) {
         if (err) {
             console.error('Errore durante l\'inserimento nel database:', err.message);
             res.status(500).send('Errore durante la registrazione');
@@ -40,12 +41,8 @@ app.post('/signup', (req, res) => {
     });
 });
 
+
 // Inizializzazione del server
 app.listen(PORT, () => {
     console.log(`Server in ascolto su http://localhost:${PORT}`);
 });
-
-
-
-
-//DA PROVARE 

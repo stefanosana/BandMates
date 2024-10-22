@@ -13,5 +13,6 @@
     "express": "^4.21.1",
     "node.js": "^0.0.1-security",
     "sqlite3": "^5.1.7"
-  }
+  },
+  "devDependencies": {}
 }
