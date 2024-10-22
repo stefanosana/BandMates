@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BandMates - Trova la tua Band o Musicista</title>
+    <title>BandMates - Registrati</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -11,6 +11,9 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
@@ -122,71 +125,51 @@
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="index.html">BandMates</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="login.html">Accedi</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="signup.html">Registrati</a>
-                    </li>
-                </ul>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="index.html">BandMates</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="login.html">Accedi</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="signup.html">Registrati</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <!-- Hero Section with Search Bar -->
-    <div class="hero-section">
-        <div class="search-bar">
-            <h1 class="mb-4">Trova il tuo prossimo artista o band</h1>
-            <form action="/search" method="GET">
-                <input type="text" name="search" placeholder="Cerca musicisti, band..." required>
-                <button type="submit">Cerca</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Featured Artists Section -->
-    <div class="artist-section">
-        <h2>Artisti Popolari</h2>
+    <!-- Signup Section -->
+    <div class="container py-5">
         <div class="row justify-content-center">
-            <!-- Card 1 -->
-            <div class="col-md-3 mb-4">
-                <div class="card">
-                    <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Artista 1">
-                    <div class="card-body">
-                        <h5 class="card-title">Nome Artista 1</h5>
-                        <p class="card-text">Chitarrista | Rock</p>
-                        <a href="#" class="btn btn-primary">Vedi Profilo</a>
-                    </div>
-                </div>
-            </div>
-            <!-- Card 2 -->
-            <div class="col-md-3 mb-4">
-                <div class="card">
-                    <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Artista 2">
-                    <div class="card-body">
-                        <h5 class="card-title">Nome Artista 2</h5>
-                        <p class="card-text">Batterista | Jazz</p>
-                        <a href="#" class="btn btn-primary">Vedi Profilo</a>
-                    </div>
-                </div>
-            </div>
-            <!-- Card 3 -->
-            <div class="col-md-3 mb-4">
-                <div class="card">
-                    <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Artista 3">
-                    <div class="card-body">
-                        <h5 class="card-title">Nome Artista 3</h5>
-                        <p class="card-text">Cantante | Pop</p>
-                        <a href="#" class="btn btn-primary">Vedi Profilo</a>
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body p-5">
+                        <h2 class="text-center mb-4">Crea il tuo account</h2>
+                        <form action="/signup" method="POST">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nome Completo</label>
+                                <input type="text" class="form-control" id="name" name="name" placeholder="Inserisci il tuo nome" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Inserisci la tua email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Crea una password" required>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">Registrati</button>
+                            </div>
+                        </form>
+                        <p class="text-center mt-3">Hai già un account? <a href="login.html">Accedi qui</a></p>
                     </div>
                 </div>
             </div>
@@ -194,9 +177,8 @@
     </div>
 
     <!-- Footer -->
-    <footer>
+    <footer class="text-center py-4">
         <p>&copy; 2024 BandMates. Tutti i diritti riservati.</p>
-        <p><a href="#">Privacy Policy</a> | <a href="#">Termini di servizio</a></p>
     </footer>
 
     <!-- Bootstrap JS and dependencies -->
