@@ -1,6 +1,8 @@
 document.getElementById('signupForm').addEventListener('submit', async (event) => {
     event.preventDefault(); // Previeni il comportamento predefinito del form
 
+    console.log("Script signup.js caricato correttamente");
+
     console.log("Form submitted");  // Debug: verifica se l'evento submit viene intercettato
 
     const userType = document.getElementById('userType').value;
@@ -26,8 +28,11 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
         data.looking_for = document.getElementById('lookingFor').value;
     }
 
+
+
+
     try {
-        const response = await fetch('http://localhost:3000/signup', {
+        const response = await fetch('http://localhost:3001/api/signup', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

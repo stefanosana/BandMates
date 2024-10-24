@@ -1,19 +1,23 @@
 const express = require('express');
+const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Configurazione del body-parser per gestire i dati JSON
 app.use(bodyParser.json());
+
+// Configurazione per servire i file statici dalla cartella "client"
+app.use(express.static(path.join(__dirname, '../client')));
 
 // Connessione al database SQLite
 const db = new sqlite3.Database('./bandmates.db');
 
 // Rotta per gestire la richiesta POST dalla pagina di signup
-app.post('/signup', async (req, res) => {
+app.post('/api/signup', async (req, res) => {
     const { full_name, email, password, user_type, instrument, experience, description, looking_for, location } = req.body;
 
     // Eseguiamo l'hash della password prima di inserirla nel database
@@ -29,9 +33,9 @@ app.post('/signup', async (req, res) => {
         db.run(musicianQuery, [full_name, email, hashedPassword, instrument, experience, description, location], function(err) {
             if (err) {
                 console.error('Errore durante l\'inserimento nella tabella musicians:', err.message);
-                return res.status(500).json({ error: 'Errore durante la registrazione del musicista' }); // Modificato per restituire JSON
+                return res.status(500).send('Errore durante la registrazione del musicista');
             }
-            res.json({ message: 'Registrazione del musicista completata con successo!' }); // Restituisce JSON
+            res.send('Registrazione del musicista completata con successo!');
         });
 
     } else if (user_type === 'band') {
@@ -44,12 +48,12 @@ app.post('/signup', async (req, res) => {
         db.run(bandQuery, [full_name, email, hashedPassword, description, looking_for, location], function(err) {
             if (err) {
                 console.error('Errore durante l\'inserimento nella tabella bands:', err.message);
-                return res.status(500).json({ error: 'Errore durante la registrazione della band' }); // Modificato per restituire JSON
+                return res.status(500).send('Errore durante la registrazione della band');
             }
-            res.json({ message: 'Registrazione della band completata con successo!' }); // Restituisce JSON
+            res.send('Registrazione della band completata con successo!');
         });
     } else {
-        res.status(400).json({ error: 'Tipo di utente non valido' }); // Modificato per restituire JSON
+        res.status(400).send('Tipo di utente non valido');
     }
 });
 
