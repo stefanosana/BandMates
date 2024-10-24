@@ -22,16 +22,16 @@ app.post('/signup', async (req, res) => {
     if (user_type === 'musician') {
         // Inserisci il musicista nella tabella musicians
         const musicianQuery = `
-            INSERT INTO MUSICIANS (full_name, email, password, instrument, experience, description, location)
+            INSERT INTO MUSICIANS (full_name, email, password, instrument, experience_level, description, location)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
 
         db.run(musicianQuery, [full_name, email, hashedPassword, instrument, experience, description, location], function(err) {
             if (err) {
                 console.error('Errore durante l\'inserimento nella tabella musicians:', err.message);
-                return res.status(500).send('Errore durante la registrazione del musicista');
+                return res.status(500).json({ error: 'Errore durante la registrazione del musicista' }); // Modificato per restituire JSON
             }
-            res.send('Registrazione del musicista completata con successo!');
+            res.json({ message: 'Registrazione del musicista completata con successo!' }); // Restituisce JSON
         });
 
     } else if (user_type === 'band') {
@@ -44,12 +44,12 @@ app.post('/signup', async (req, res) => {
         db.run(bandQuery, [full_name, email, hashedPassword, description, looking_for, location], function(err) {
             if (err) {
                 console.error('Errore durante l\'inserimento nella tabella bands:', err.message);
-                return res.status(500).send('Errore durante la registrazione della band');
+                return res.status(500).json({ error: 'Errore durante la registrazione della band' }); // Modificato per restituire JSON
             }
-            res.send('Registrazione della band completata con successo!');
+            res.json({ message: 'Registrazione della band completata con successo!' }); // Restituisce JSON
         });
     } else {
-        res.status(400).send('Tipo di utente non valido');
+        res.status(400).json({ error: 'Tipo di utente non valido' }); // Modificato per restituire JSON
     }
 });
 

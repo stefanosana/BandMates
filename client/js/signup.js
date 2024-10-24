@@ -1,47 +1,49 @@
 document.getElementById('signupForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
+    event.preventDefault(); // Previeni il comportamento predefinito del form
 
-    // Ottieni i valori dai campi del form
-    const full_name = document.getElementById('name').value;
+    console.log("Form submitted");  // Debug: verifica se l'evento submit viene intercettato
+
+    const userType = document.getElementById('userType').value;
+    const fullName = document.getElementById('name').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const user_type = document.getElementById('userType').value;
-    const instrument = user_type === 'musician' ? document.getElementById('instrument').value : null;
-    const experience = user_type === 'musician' ? document.getElementById('skillLevel').value : null;
     const description = document.getElementById('description').value;
     const location = document.getElementById('location').value;
-    const looking_for = user_type === 'band' ? document.getElementById('lookingFor').value : null;
+
+    let data = {
+        user_type: userType,
+        full_name: fullName,
+        email: email,
+        password: password,
+        description: description,
+        location: location
+    };
+
+    if (userType === 'musician') {
+        data.instrument = document.getElementById('instrument').value;
+        data.experience = document.getElementById('skillLevel').value;
+    } else if (userType === 'band' && document.getElementById('lookingFor')) {
+        data.looking_for = document.getElementById('lookingFor').value;
+    }
 
     try {
-        // Invia la richiesta al server
-        const response = await fetch('/signup', {
+        const response = await fetch('http://localhost:3000/signup', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                full_name,
-                email,
-                password,
-                user_type,
-                instrument,
-                experience,
-                description,
-                location,
-                looking_for,
-            }),
+            body: JSON.stringify(data), // Converti i dati in JSON
         });
 
-        const result = await response.text();
-
         if (response.ok) {
-            alert(result); // Mostra un messaggio di successo
-            window.location.href = '/login.html'; // Redirigi alla pagina di login dopo il successo
+            const result = await response.text();
+            alert(result); // Mostra il risultato direttamente
+            window.location.href = '/login.html'; // Redirigi alla pagina di login
         } else {
-            alert('Errore durante la registrazione: ' + result); // Mostra l'errore
+            alert('Errore durante la registrazione. Riprova.');
         }
     } catch (error) {
         console.error('Errore durante la registrazione:', error);
-        alert('Errore durante la registrazione. Riprova più tardi.');
+        alert('Errore durante la registrazione. Controlla la console per dettagli.');
     }
 });
