@@ -214,9 +214,8 @@ BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove co
   - Design responsive per supportare l'uso su dispositivi mobili e desktop.
   - Conformità alle linee guida sull'accessibilità per garantire l'accesso a utenti con disabilità.
 
-- **Integrazione con MySQL/Apache**:
-  - MySQL per l'archiviazione dei dati.
-  - Apache come server per l'hosting e gestione del traffico.
+- **Integrazione con SQLite**:
+  - Per l'archiviazione dei dati.
 
 - **Conoscenza Linguaggi di Programmazione**:
   - **HTML, CSS**: per il front-end responsive.
