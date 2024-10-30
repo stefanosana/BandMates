@@ -222,8 +222,6 @@ BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove co
   - **HTML, CSS**: per il front-end responsive.
   - **JavaScript**: per l’interattività e la gestione della messaggistica.
   - **SQL**: per la gestione dei dati.
-  - **PHP**: per il backend.
-  - **Framework front-end** (React o Vue.js): per migliorare l’esperienza utente.
 
 ---
 
