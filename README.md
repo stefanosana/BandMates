@@ -231,3 +231,8 @@ BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove co
 
 - **Conoscenza Musicale**:
   - Familiarità con la terminologia musicale (strumenti, generi, esperienza) per consentire una classificazione accurata di musicisti e band.
+
+
+## Casi D'Uso
+![image](https://github.com/user-attachments/assets/f7536c34-475a-4833-ab64-b2bf6083066b)
+
