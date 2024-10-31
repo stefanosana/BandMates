@@ -1,25 +1,27 @@
-# BandMates
+# 🎶 BandMates 🎶
 
-PRESENTAZIONE START APP:
-Titolo: BandMates
-Descrizione: BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove 
-collaborazioni. Se sei un musicista in cerca di una band con cui suonare o fai parte di
- una band che ha bisogno di un nuovo membro, BandMates ti aiuta a trovare la 
-soluzione giusta. Con funzionalità dedicate per mettere in contatto musicisti e band,
-puoi facilmente organizzare sessioni di prova, jam session o collaborazioni future, 
-tutto direttamente dalla piattaforma.
- "Trova la tua band, crea la tua musica – Unisciti a chi condivide la tua 
-passione!"
-Target: Band e Musicisti
-Problema: Mancanza di gente con cui suonare
-Competitor: Villaggio Musicale, Musiqua, Mercatino Musicale, Showgroup
-Tecnologie: Git
-Repository GitHub: https://github.com/stefanosana/BandMates.git
-Timestamp: 1726737714
----------------------------------------------------------------------------------------------------
----------------------------------------------------------------------------------------------------
-RISPOSTE HTTP IN FORMATO JSON
-Login riuscito:
+---
+
+## 📜 Presentazione della piattaforma
+**Titolo**: BandMates  
+**Descrizione**:  
+BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove collaborazioni. Se sei un musicista in cerca di una band o una band in cerca di nuovi membri, BandMates ti aiuta a trovare la soluzione giusta. Grazie a funzionalità dedicate per mettere in contatto musicisti e band, potrai facilmente organizzare sessioni di prova, jam session o collaborazioni future, tutto dalla piattaforma.
+
+> "Trova la tua band, crea la tua musica – Unisciti a chi condivide la tua passione!"
+
+**Target**: Band e Musicisti  
+**Problema**: Mancanza di gente con cui suonare  
+**Competitor**: Villaggio Musicale, Musiqua, Mercatino Musicale, Showgroup  
+**Tecnologie**: Git  
+**Repository GitHub**: [BandMates Repository](https://github.com/stefanosana/BandMates.git)  
+**Timestamp**: 1726737714  
+
+---
+
+## 📩 Risposte HTTP in formato JSON
+
+### Login riuscito
+```json
 {
   "status": 200,
   "message": "Login avvenuto con successo",
@@ -31,9 +33,10 @@ Login riuscito:
     "expires_in": 3600
   }
 }
+```
 
----------------------------------------------------------------------
-Ricerca riuscita:
+### Ricerca Riuscita
+```json
 {
   "status": 200,
   "message": "Ricerca avvenuta con successo",
@@ -69,8 +72,11 @@ Ricerca riuscita:
     }
   }
 }
----------------------------------------------------------------------
-Messaggio inviato con successo (CHAT SINGOLA):
+
+```
+
+### Messaggio inviato con successo (Chat singola)
+```json
 {
   "status": 200,
   "message": "Messaggio inviato con successo",
@@ -93,8 +99,10 @@ Messaggio inviato con successo (CHAT SINGOLA):
     }
   }
 }
----------------------------------------------------------------------
-Messaggio inviato con successo (CHAT DI GRUPPO):
+```
+
+### Messaggio inviato con successo (Chat di gruppo)
+```json
 {
   "status": 200,
   "message": "Messaggio inviato con successo",
@@ -115,8 +123,11 @@ Messaggio inviato con successo (CHAT DI GRUPPO):
     }
   }
 }
----------------------------------------------------------------------
-Invio di media riuscito:
+
+```
+
+### Invio di media riuscito
+```json
 {
   "status": 200,
   "message": "Media inviato con successo",
@@ -140,20 +151,23 @@ Invio di media riuscito:
     }
   }
 }
----------------------------------------------------------------------
-Feedback inviato con successo:
+
+```
+
+### Feedback inviato con successo
+```json
 {
   "status": 200,
   "message": "Feedback inviato con successo",
   "data": {
     "feedback_id": "fb_001",
     "utente_id": "12345",
-    "tipo_feedback": "richiesta_funzione",  // può essere "segnalazione_bug", "richiesta_funzione", o "assistenza_tecnica"
+    "tipo_feedback": "richiesta_funzione",
     "descrizione": "Sarebbe utile poter filtrare i musicisti anche per età.",
     "timestamp": "2024-09-27T12:45:00Z",
-    "stato_feedback": "in revisione",  // può essere "in revisione", "risolto", "non_risolto"
+    "stato_feedback": "in revisione",
     "valutazione_esperienza": {
-      "punteggio": 5,  // punteggio da 1 a 5
+      "punteggio": 5,
       "commento": "Esperienza molto positiva, app intuitiva e facile da usare!"
     },
     "aggiornamenti": {
@@ -162,51 +176,63 @@ Feedback inviato con successo:
     }
   }
 }
------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------
-**RACCOLTA DEI REQUISIITI: **
+```
 
-REQUISITI FUNZIONALI:
-Funzionalità di Messaggistica:
-Messaggistica in tempo reale con notifiche istantanee.
-Supporto per chat singole e di gruppo.
-Funzionalità di media sharing per permettere lo scambio di demo o brani musicali.
+## 📌 Raccolta dei Requisiti
 
-Criteri di Ricerca:
-Ricerca per località geografica.
-Filtri per genere musicale, strumenti suonati, anni di esperienza e disponibilità oraria.
-Opzione per salvare le ricerche preferite o impostare avvisi per nuove corrispondenze.
+### Requisiti Funzionali
 
-Funzionalità di Login/Register:
-Registrazione e login tramite email e password o autenticazione tramite social media.
-Recupero password e gestione profilo.
-Verifica tramite email per la validazione dell'account.
+- **Funzionalità di Messaggistica**:
+  - Messaggistica in tempo reale con notifiche istantanee.
+  - Supporto per chat singole e di gruppo.
+  - Funzionalità di media sharing per scambio di demo o brani musicali.
 
-Feedback e Supporto:
-Sistema di feedback integrato per segnalare bug, richiedere nuove funzionalità o ricevere assistenza.
-Possibilità di valutare l'esperienza su base continuativa.
+- **Avere dei criteri di ricerca**:
+  - Ricerca per località geografica.
+  - Filtri per genere musicale, strumenti suonati, anni di esperienza e disponibilità oraria.
+  - Opzione per salvare ricerche preferite o impostare avvisi per nuove corrispondenze.
 
-REQUISITI NON FUNZIONALI:
-Sicurezza e Privacy:
-Utilizzo di protocolli HTTPS per garantire la sicurezza delle comunicazioni.
-Implementazione di crittografia per proteggere i dati degli utenti.
-Politiche sulla privacy e termini di servizio chiari per la gestione dei dati personali.
+- **Funzionalità di Login/Register**:
+  - Registrazione e login tramite email e password o autenticazione tramite social media.
+  - Recupero password e gestione profilo.
+  - Verifica tramite email per la validazione dell'account.
 
-Responsive Design e Accessibilità:
-Design responsive per supportare l'utilizzo su dispositivi mobili e desktop.
-Rispetto delle linee guida sull'accessibilità per garantire l'accesso a utenti con disabilità.
+- **Implementare il Feedback e Supporto**:
+  - Sistema di feedback per segnalare bug, richiedere nuove funzionalità o assistenza.
+  - Valutazione dell'esperienza in maniera continuativa.
+ 
+- **Postare annunci di ricerca musicista**:
+  - Le band possono postare degli annunci in cui chiedono che tipo di muscista serve, con che strumento... 
 
-Integrazione con MySQL/Apache:
-Implementazione di MySQL per l'archiviazione dei dati.
-Apache come server per l'hosting dell'applicazione e gestione del traffico.
+---
 
-Conoscenza Linguaggi di Programmazione:
-HTML, CSS per il front-end responsive.
-JavaScript per l’interattività e la gestione della messaggistica.
-SQL per la gestione dei dati.
-PHP per il backend.
-Framework front-end (React o Vue.js) per migliorare l’esperienza utente.
+### Requisiti Non Funzionali
 
-REQUISITI DI DOMINIO:
-Conoscenza Musicale:
-Competenze nella terminologia musicale (strumenti, generi, esperienza) per permettere una classificazione accurata dei musicisti e delle band.
+- **Sicurezza e Privacy**:
+  - Protocollo HTTPS per garantire la sicurezza delle comunicazioni.
+  - Crittografia per protezione dei dati dell'utente.
+  - Politiche sulla privacy e termini di servizio chiari per la gestione dei dati.
+
+- **Responsive Design e Accessibilità**:
+  - Design responsive per supportare l'uso su dispositivi mobili e desktop.
+  - Conformità alle linee guida sull'accessibilità per garantire l'accesso a utenti con disabilità.
+
+- **Integrazione con SQLite**:
+  - Per l'archiviazione dei dati.
+
+- **Conoscenza Linguaggi di Programmazione**:
+  - **HTML, CSS**: per il front-end responsive.
+  - **JavaScript**: per l’interattività e la gestione della messaggistica.
+  - **SQL**: per la gestione dei dati.
+
+---
+
+### Requisiti di Dominio
+
+- **Conoscenza Musicale**:
+  - Familiarità con la terminologia musicale (strumenti, generi, esperienza) per consentire una classificazione accurata di musicisti e band.
+
+
+## Casi D'Uso
+![image](https://github.com/user-attachments/assets/f7536c34-475a-4833-ab64-b2bf6083066b)
+
