@@ -234,5 +234,5 @@ BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove co
 
 
 ## Casi D'Uso
-![image](https://github.com/user-attachments/assets/f7536c34-475a-4833-ab64-b2bf6083066b)
+/uml.png
 
