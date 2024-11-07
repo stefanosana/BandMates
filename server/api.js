@@ -1,63 +1,103 @@
 const express = require('express');
-const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
-const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
-
 const app = express();
-const PORT = process.env.PORT || 3001;
+const cors = require('cors');
+const port = 3000;
 
-// Configurazione del body-parser per gestire i dati JSON
-app.use(bodyParser.json());
-
-// Configurazione per servire i file statici dalla cartella "client"
-app.use(express.static(path.join(__dirname, '../client')));
+app.use(cors()); // Abilita il CORS per tutte le rotte
+app.use(express.json());
 
 // Connessione al database SQLite
-const db = new sqlite3.Database('./bandmates.db');
+const db = new sqlite3.Database('bandmates.db');
 
-// Rotta per gestire la richiesta POST dalla pagina di signup
-app.post('/api/signup', async (req, res) => {
-    const { full_name, email, password, user_type, instrument, experience, description, looking_for, location } = req.body;
 
-    // Eseguiamo l'hash della password prima di inserirla nel database
-    const hashedPassword = await bcrypt.hash(password, 10);
+// SINGUP
+// Funzione per creare l'utente
+function createUser(table, data, res) {
+    const { full_name, email, password, description, location } = data;
+    const hashedPassword = bcrypt.hashSync(password, 10); // Crittografia della password
 
-    if (user_type === 'musician') {
-        // Inserisci il musicista nella tabella musicians
-        const musicianQuery = `
-            INSERT INTO MUSICIANS (full_name, email, password, instrument, experience_level, description, location)
+    let query;
+    let params;
+
+    if (table === 'musicians') {
+        const { instrument, experience_level } = data;  // Modifica qui per "experience_level"
+        query = `
+            INSERT INTO musicians (full_name, email, password, instrument, experience_level, description, location)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-
-        db.run(musicianQuery, [full_name, email, hashedPassword, instrument, experience, description, location], function(err) {
-            if (err) {
-                console.error('Errore durante l\'inserimento nella tabella musicians:', err.message);
-                return res.status(500).send('Errore durante la registrazione del musicista');
-            }
-            res.send('Registrazione del musicista completata con successo!');
-        });
-
-    } else if (user_type === 'band') {
-        // Inserisci la band nella tabella bands
-        const bandQuery = `
-            INSERT INTO BANDS (full_name, email, password, description, looking_for, location)
+        params = [full_name, email, hashedPassword, instrument, experience_level, description, location];
+    } else if (table === 'bands') {
+        const { looking_for } = data;
+        query = `
+            INSERT INTO bands (full_name, email, password, description, looking_for, location)
             VALUES (?, ?, ?, ?, ?, ?)
         `;
+        params = [full_name, email, hashedPassword, description, looking_for, location];
+    }
 
-        db.run(bandQuery, [full_name, email, hashedPassword, description, looking_for, location], function(err) {
-            if (err) {
-                console.error('Errore durante l\'inserimento nella tabella bands:', err.message);
-                return res.status(500).send('Errore durante la registrazione della band');
-            }
-            res.send('Registrazione della band completata con successo!');
-        });
+    db.run(query, params, function (err) {
+        if (err) {
+            res.status(500).json({ error: "Errore durante la registrazione." });
+            return;
+        }
+        res.status(201).json({ message: "Registrazione completata con successo!", userId: this.lastID });
+    });
+}
+
+// Endpoint per la registrazione
+app.post('/signup', (req, res) => {
+    const { userType, ...data } = req.body;
+
+    if (userType === 'musician') {
+        createUser('musicians', data, res);
+    } else if (userType === 'band') {
+        createUser('bands', data, res);
     } else {
-        res.status(400).send('Tipo di utente non valido');
+        res.status(400).json({ error: "Tipo di utente non valido." });
     }
 });
 
-// Inizializzazione del server
-app.listen(PORT, () => {
-    console.log(`Server in ascolto su http://localhost:${PORT}`);
+//LOGIN
+// Funzione per effettuare il login
+function loginUser(table, email, password, res) {
+    const query = `SELECT * FROM ${table} WHERE email = ?`;
+
+    db.get(query, [email], (err, user) => {
+        if (err) {
+            res.status(500).json({ error: "Errore del server durante il login." });
+            return;
+        }
+        
+        // Verifica se l'utente esiste e la password è corretta
+        if (user && bcrypt.compareSync(password, user.password)) {
+            res.status(200).json({ message: "Login effettuato con successo!", userId: user.id });
+        } else {
+            res.status(401).json({ error: "Email o password non corretti." });
+        }
+    });
+}
+
+// Endpoint per il login
+app.post('/login', (req, res) => {
+    const { userType, email, password } = req.body;
+
+    if (!email || !password) {
+        res.status(400).json({ error: "Email e password sono obbligatori." });
+        return;
+    }
+
+    if (userType === 'musician') {
+        loginUser('musicians', email, password, res);
+    } else if (userType === 'band') {
+        loginUser('bands', email, password, res);
+    } else {
+        res.status(400).json({ error: "Tipo di utente non valido." });
+    }
+});
+
+// Avvio del server
+app.listen(port, () => {
+    console.log(`Server in ascolto sulla porta ${port}`);
 });
