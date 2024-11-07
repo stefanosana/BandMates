@@ -27,7 +27,7 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
 
     try {
         // Effettua la richiesta POST al server
-        const response = await fetch('http://localhost:3000/signup', {
+        const response = await fetch('http://localhost:3001/signup', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

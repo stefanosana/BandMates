@@ -1,35 +1,56 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
-const app = express();
 const cors = require('cors');
+const app = express();
 const port = 3000;
 
-app.use(cors()); // Abilita il CORS per tutte le rotte
+// Configurazione avanzata del CORS
+const corsOptions = {
+    origin: 'http://localhost:3001/client/signup.html', // Sostituisci con il dominio che vuoi consentire
+    methods: ['GET', 'POST'], // Metodi consentiti
+    allowedHeaders: ['Content-Type', 'Authorization'] // Intestazioni consentite
+};
+
+app.use(cors(corsOptions)); // Abilita il CORS con le opzioni specificate
 app.use(express.json());
 
 // Connessione al database SQLite
 const db = new sqlite3.Database('bandmates.db');
 
-
 // SINGUP
 // Funzione per creare l'utente
 function createUser(table, data, res) {
-    const { full_name, email, password, description, location } = data;
-    const hashedPassword = bcrypt.hashSync(password, 10); // Crittografia della password
-
     let query;
     let params;
 
     if (table === 'musicians') {
-        const { instrument, experience_level } = data;  // Modifica qui per "experience_level"
+        const { full_name, email, password, instrument, experience_level, description, location } = data;
+
+        // Controllo che tutti i campi necessari siano presenti
+        if (!full_name || !email || !password || !instrument || !experience_level || !description || !location) {
+            res.status(400).json({ error: "Tutti i campi sono obbligatori." });
+            return;
+        }
+
+        const hashedPassword = bcrypt.hashSync(password, 10); // Crittografia della password
+
         query = `
             INSERT INTO musicians (full_name, email, password, instrument, experience_level, description, location)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
         params = [full_name, email, hashedPassword, instrument, experience_level, description, location];
     } else if (table === 'bands') {
-        const { looking_for } = data;
+        const { full_name, email, password, description, looking_for, location } = data;
+
+        // Controllo che tutti i campi necessari siano presenti
+        if (!full_name || !email || !password || !description || !looking_for || !location) {
+            res.status(400).json({ error: "Tutti i campi sono obbligatori." });
+            return;
+        }
+
+        const hashedPassword = bcrypt.hashSync(password, 10); // Crittografia della password
+
         query = `
             INSERT INTO bands (full_name, email, password, description, looking_for, location)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -49,6 +70,8 @@ function createUser(table, data, res) {
 // Endpoint per la registrazione
 app.post('/signup', (req, res) => {
     const { userType, ...data } = req.body;
+
+    console.log(req.body);
 
     if (userType === 'musician') {
         createUser('musicians', data, res);
