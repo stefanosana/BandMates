@@ -1,18 +1,9 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
-const cors = require('cors');
 const app = express();
 const port = 3000;
 
-// Configurazione avanzata del CORS
-const corsOptions = {
-    origin: 'http://localhost:3001/client/signup.html', // Sostituisci con il dominio che vuoi consentire
-    methods: ['GET', 'POST'], // Metodi consentiti
-    allowedHeaders: ['Content-Type', 'Authorization'] // Intestazioni consentite
-};
-
-app.use(cors(corsOptions)); // Abilita il CORS con le opzioni specificate
 app.use(express.json());
 
 // Connessione al database SQLite
