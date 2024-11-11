@@ -112,6 +112,22 @@ app.post('/login', (req, res) => {
 });
 
 
+
+// scrivi un endpoint per viusalizzare tutte le band
+app.get('/bands', (req, res) => {
+    const query = `SELECT * FROM bands`;
+
+    db.all(query, (err, bands) => {
+        if (err) {
+            res.status(500).json({ error: "Errore durante il recupero delle band." });
+            return;
+        }
+
+        res.status(200).json(bands);
+    });
+});
+
+
 app.use('/static', express.static('public')); // Servi i file statici dalla cartella 'public'
 // Avvio del server
 app.listen(port, () => {

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>test bandmates</title>
+</head>
+<body>
+    <input type="submit" value="tutti" onClick="studenti('/bands')">
+
+    <div id="out"> </div>
+
+    <script>
+        function studenti(url) {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    let out = document.getElementById('out');
+                    out.innerHTML = '';
+                    data.forEach(element => {
+                        out.innerHTML += `<p>${element.name}</p>`;
+                    });
+                });
+        }
+    </script>
+
+</body>
+</html>
