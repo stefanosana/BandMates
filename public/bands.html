@@ -11,18 +11,25 @@
     <div id="out"> </div>
 
     <script>
-        function studenti(url) {
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    let out = document.getElementById('out');
-                    out.innerHTML = '';
-                    data.forEach(element => {
-                        out.innerHTML += `<p>${element.name}</p>`;
-                    });
+    function studenti(url) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                let out = document.getElementById('out');
+                out.innerHTML = '';
+                data.forEach(element => {
+                    out.innerHTML += `<p>${element.name}</p>`;
                 });
-        }
-    </script>
+            }
+        };
+
+        xhr.send();
+    }
+</script>
+
 
 </body>
 </html>
