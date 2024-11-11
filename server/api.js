@@ -120,6 +120,8 @@ app.post('/login', (req, res) => {
     }
 });
 
+
+app.use('/static', express.static('public')); // Servi i file statici dalla cartella 'public'
 // Avvio del server
 app.listen(port, () => {
     console.log(`Server in ascolto sulla porta ${port}`);
