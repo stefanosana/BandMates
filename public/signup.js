@@ -11,6 +11,17 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
     const description = document.getElementById('description').value;
     const lookingFor = userType === 'band' ? document.getElementById('lookingFor').value : '';
     const location = document.getElementById('location').value;
+    const genre = userType === 'band' ? document.getElementById('genre').value : '';
+
+    // Controllo che tutti i campi obbligatori siano presenti
+    if (!name || !email || !password || !description || !location) {
+        return alert('Per favore, compila tutti i campi obbligatori.');
+    }
+
+    // Controllo sulla lunghezza della password (minimo 6 caratteri)
+    if (password.length < 6) {
+        return alert('La password deve avere almeno 6 caratteri.');
+    }
 
     // Oggetto con i dati da inviare
     const data = {
@@ -22,7 +33,8 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
         skillLevel,
         description,
         lookingFor,
-        location
+        location,
+        genre
     };
 
     try {
