@@ -1,10 +1,12 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
+//const cors = require('cors');
 const app = express();
 const port = 3000;
 
 app.use(express.json());
+//app.use(cors());
 
 // Connessione al database SQLite
 const db = new sqlite3.Database('bandmates.db');
@@ -116,8 +118,23 @@ app.post('/login', (req, res) => {
 // scrivi un endpoint per viusalizzare tutte le band
 app.get('/bands', (req, res) => {
     const query = `SELECT * FROM bands`;
-
+    
     db.all(query, (err, bands) => {
+        if (err) {
+            res.status(500).json({ error: "Errore durante il recupero delle band." });
+            return;
+        }
+        
+        res.status(200).json(bands);
+    });
+});
+
+// Endpoint per ottenere band filtrate per location
+app.get('/bands/location/:location', (req, res) => {
+    const location = req.params.location;
+    const query = `SELECT * FROM bands WHERE location = ?`;
+
+    db.all(query, [location], (err, bands) => {
         if (err) {
             res.status(500).json({ error: "Errore durante il recupero delle band." });
             return;
@@ -128,7 +145,9 @@ app.get('/bands', (req, res) => {
 });
 
 
-app.use(express.static('public')); // Servi i file statici dalla cartella 'public'
+
+
+app.use('/static', express.static('public')); // Servi i file statici dalla cartella 'public'
 // Avvio del server
 app.listen(port, () => {
     console.log(`Server in ascolto sulla porta ${port}`);

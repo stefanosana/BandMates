@@ -6,28 +6,70 @@
     <title>test bandmates</title>
 </head>
 <body>
-    <input type="submit" value="tutti" onClick="studenti('/bands')">
+
+    <input type="submit" value="tutti" onClick="bands('/bands')">
+    <input type="submit" value="location" onClick="bandsByLocation('/bands')">
 
     <div id="out"> </div>
 
     <script>
-    function studenti(url) {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', url, true);
+        function bands(url) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+    
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    let out = document.getElementById('out');
+                    out.innerHTML = '';
+    
+                    data.forEach(element => {
+                        console.log(element); // Logga ogni elemento per verificare la struttura
+                        if (element && element.full_name) { // Sostituisci "name" con la proprietà corretta, ad esempio "full_name"
+                            out.innerHTML += `<p>${element.full_name}</p>`;
+                        } else {
+                            out.innerHTML += `<p>no data</p>`;
+                        }
+                    });
+                }
+            };
+    
+            xhr.send();
+        }
 
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                const data = JSON.parse(xhr.responseText);
-                let out = document.getElementById('out');
-                out.innerHTML = '';
-                data.forEach(element => {
-                    out.innerHTML += `<p>${element.name}</p>`;
-                });
-            }
-        };
+        function bandsByLocation() {
+            const url = '/bands/location:Los%20Angeles'; // Endpoint per le band a Los Angeles
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+    
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    let out = document.getElementById('out');
+                    out.innerHTML = '';
+    
+                    if (data.length === 0) {
+                        out.innerHTML = '<p>No bands found in Los Angeles</p>';
+                    } else {
+                        data.forEach(element => {
+                            if (element && element.full_name) { // Usa la proprietà corretta del database
+                                out.innerHTML += `<p>${element.full_name}</p>`;
+                            } else {
+                                out.innerHTML += `<p>no data</p>`;
+                            }
+                        });
+                    }
+                }
+            };
+    
+            xhr.send();
+        }
+    </script>
+    <script>
+        
+    </script>
+    
+    
 
-        xhr.send();
-    }
-</script>
 </body>
 </html>
