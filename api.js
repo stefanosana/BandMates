@@ -11,7 +11,7 @@ const db = new sqlite3.Database('bandmates.db');
 // Endpoint per il signup
 app.post('/signup', async (req, res) => {
     const { userType, full_name, email, password, instrument, experience, description, location, looking_for, genre } = req.body;
-
+    
     // Verifica che tutti i campi comuni siano presenti
     if (!userType || !full_name || !email || !password || !location) {
         return res.status(400).json({ error: "I campi userType, full_name, email, password e location sono obbligatori" });
@@ -35,6 +35,7 @@ app.post('/signup', async (req, res) => {
         return res.status(400).json({ error: "Il campo genre è obbligatorio per le band" });
     }
 
+    
     try {
         // Hash della password
         const hashedPassword = await bcrypt.hash(password, 10);
