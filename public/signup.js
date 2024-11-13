@@ -3,12 +3,11 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
 
     // Ottieni i dati dal form
     const userType = document.getElementById('userType').value;
-    const full_name = document.getElementById('name').value;
+    const full_name = document.getElementById('name').value; 
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const instrument = userType === 'musician' ? document.getElementById('instrument').value : '';
-    const skillLevel = userType === 'musician' ? document.getElementById('skillLevel').value : '';
-    const experience = userType === 'musician' ? document.getElementsByClassName('experience').value : ''; // Aggiungi questo campo
+    const skillLevel = userType === 'musician' ? document.getElementById('skillLevel').value : '';  /////////////////////////////////
     const description = document.getElementById('description').value;
     const lookingFor = userType === 'band' ? document.getElementById('lookingFor').value : '';
     const location = document.getElementById('location').value;
@@ -17,12 +16,11 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
     // Oggetto con i dati da inviare
     const data = {
         userType,
-        full_name,
+        full_name,  
         email,
         password,
         instrument,
         skillLevel,
-        experience,  // Aggiungi questo campo
         description,
         lookingFor,
         location,
@@ -51,3 +49,4 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
         alert('Errore durante la registrazione. Verifica la connessione al server.');
     }
 });
+

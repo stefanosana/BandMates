@@ -85,9 +85,6 @@ app.post('/signup', async (req, res) => {
 
 
 
-
-
-
 app.get('/bands', (req, res) => {
     const query = `SELECT * FROM bands`;
     
