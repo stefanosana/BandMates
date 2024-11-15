@@ -2,7 +2,11 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const app = express();
+const { swaggerUi, swaggerSpec } = require('./swagger');
+
 const port = 3000;
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Configurazione Swagger
 
 app.use(express.json())
 // Connessione al database SQLite
