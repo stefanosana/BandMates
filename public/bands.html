@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>test bandmates</title>
 </head>
+
 <body>
 
     <input type="submit" value="tutti" onClick="bands('/bands')">
@@ -12,17 +14,19 @@
 
     <div id="out"> </div>
 
+
+
     <script>
         function bands(url) {
             const xhr = new XMLHttpRequest();
             xhr.open('GET', url, true);
-    
-            xhr.onreadystatechange = function() {
+
+            xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     const data = JSON.parse(xhr.responseText);
                     let out = document.getElementById('out');
                     out.innerHTML = '';
-    
+
                     data.forEach(element => {
                         console.log(element); // Logga ogni elemento per verificare la struttura
                         if (element && element.full_name) { // Sostituisci "name" con la proprietà corretta, ad esempio "full_name"
@@ -33,7 +37,7 @@
                     });
                 }
             };
-    
+
             xhr.send();
         }
 
@@ -41,13 +45,13 @@
             const url = '/bands/location:Los%20Angeles'; // Endpoint per le band a Los Angeles
             const xhr = new XMLHttpRequest();
             xhr.open('GET', url, true);
-    
-            xhr.onreadystatechange = function() {
+
+            xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     const data = JSON.parse(xhr.responseText);
                     let out = document.getElementById('out');
                     out.innerHTML = '';
-    
+
                     if (data.length === 0) {
                         out.innerHTML = '<p>No bands found in Los Angeles</p>';
                     } else {
@@ -61,15 +65,16 @@
                     }
                 }
             };
-    
+
             xhr.send();
         }
     </script>
     <script>
-        
+       
     </script>
-    
-    
+
+
 
 </body>
+
 </html>
