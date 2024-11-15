@@ -5,16 +5,21 @@ const cors = require('cors');
 
 const app = express();
 const { swaggerUi, swaggerSpec } = require('./swagger');
+const { urlencoded } = require('body-parser');
 
 const corsOptions = {
-    origin: true, // Consenti tutte le origini (solo per scopi di test)
+    origin: "*", // Consenti tutte le origini (solo per scopi di test)
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: false,
 };
 
 
+
+
 app.use(cors(corsOptions));
 const port = 3000;
+
+app.use(express.urlencoded({ extended : true }));
 
 /*
 app.use((req, res, next) => {
