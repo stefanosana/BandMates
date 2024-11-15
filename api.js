@@ -1,10 +1,28 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
+const cors = require('cors');
+
 const app = express();
 const { swaggerUi, swaggerSpec } = require('./swagger');
 
+const corsOptions = {
+    origin: true, // Consenti tutte le origini (solo per scopi di test)
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: false,
+};
+
+
+app.use(cors(corsOptions));
 const port = 3000;
+
+/*
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "https://cuddly-space-fortnight-4jqgxrvjpqxw37xgv-3000.app.github.dev/");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+*/
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Configurazione Swagger
 
