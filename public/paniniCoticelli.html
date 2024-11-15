@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elenco Panini</title>
+  <style>
+    .panino {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    .panino h2 {
+      margin: 0;
+    }
+    .ingredienti {
+      margin: 5px 0 0 0;
+      padding-left: 15px;
+      list-style-type: circle;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Menu Panini</h1>
+  <div id="output">Caricamento panini...</div>
+
+  <script>
+    
+    // Funzione per fare la richiesta fetch e visualizzare i panini
+    fetch('https://fictional-engine-jjr4xg7jp5pg2xqq.github.dev/panini')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        const outputDiv = document.getElementById('output');
+        outputDiv.innerHTML = ''; // Svuota il div
+
+        data.forEach(panino => {
+          // Crea un div per ogni panino
+          const paninoDiv = document.createElement('div');
+          paninoDiv.classList.add('panino');
+
+          // Nome del panino
+          const paninoNome = document.createElement('h2');
+          paninoNome.textContent = panino.nome;
+          paninoDiv.appendChild(paninoNome);
+
+          // Lista degli ingredienti
+          const ingredientiList = document.createElement('ul');
+          ingredientiList.classList.add('ingredienti');
+          panino.ingredienti.forEach(ingrediente => {
+            const ingredienteItem = document.createElement('li');
+            ingredienteItem.textContent = ingrediente;
+            ingredientiList.appendChild(ingredienteItem);
+          });
+          paninoDiv.appendChild(ingredientiList);
+
+          // Aggiungi il panino al contenitore output
+          outputDiv.appendChild(paninoDiv);
+        });
+      })
+      .catch(error => {
+        console.error('Errore durante la fetch:', error);
+        document.getElementById('output').innerHTML = 'Errore nel caricamento dei panini';
+      });
+  </script>
+
+</body>
+</html>
