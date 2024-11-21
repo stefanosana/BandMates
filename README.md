@@ -12,7 +12,7 @@ BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove co
 **Target**: Band e Musicisti  
 **Problema**: Mancanza di gente con cui suonare  
 **Competitor**: Villaggio Musicale, Musiqua, Mercatino Musicale, Showgroup  
-**Tecnologie**: Git  
+**Tecnologie**: Git, Html, Css, Js, Express, Http, Web Socket 
 **Repository GitHub**: [BandMates Repository](https://github.com/stefanosana/BandMates.git)  
 **Timestamp**: 1726737714  
 
