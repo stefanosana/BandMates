@@ -1,31 +1,35 @@
-document.getElementById('loginForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
+document.querySelector('form').addEventListener('submit', async (event) => {
+    event.preventDefault(); // Evita il comportamento predefinito del form (refresh della pagina)
 
-    const userType = document.getElementById('userType').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    const data = { userType, email, password };
+    // Recupera i dati dal form
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
 
     try {
-        const response = await fetch('http://localhost:3001/login', {
+        // Effettua una richiesta POST al server
+        const response = await fetch('http://localhost:3000/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({ email, password })
         });
 
-        if (response.ok) {
-            const result = await response.json();
-            alert(result.message);
-            // Logica aggiuntiva per il successo del login, come il reindirizzamento
-        } else {
-            const error = await response.json();
-            alert(error.error);
+        // Controlla la risposta del server
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert(`Errore: ${errorData.error}`);
+            return;
         }
+
+        // Se il login è riuscito, elabora la risposta
+        const data = await response.json();
+        alert(`Benvenuto, ${data.fullName}! Sei loggato come ${data.userType}.`);
+
+        // Esempio: reindirizza l'utente a un'altra pagina
+        window.location.href = 'index.html'; // Modifica con il percorso corretto
     } catch (error) {
         console.error('Errore durante il login:', error);
-        alert('Errore durante il login. Verifica la connessione al server.');
+        alert('Si è verificato un errore. Riprova più tardi.');
     }
 });

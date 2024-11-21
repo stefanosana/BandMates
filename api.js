@@ -110,6 +110,62 @@ app.post('/signup', async (req, res) => {
     }
 });
 
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ error: "Email e password sono obbligatorie" });
+    }
+
+    try {
+        // Controlla l'utente nella tabella `musicians`
+        db.get(`SELECT * FROM musicians WHERE email = ?`, [email], async (err, musician) => {
+            if (err) {
+                console.error("Errore durante il login (musician):", err.message);
+                return res.status(500).json({ error: "Errore durante il login" });
+            }
+
+            if (musician) {
+                const isPasswordValid = await bcrypt.compare(password, musician.password);
+                if (isPasswordValid) {
+                    // Reindirizza alla homepage
+                    return res.redirect('/index.html');
+                } else {
+                    return res.status(401).json({ error: "Credenziali non valide" });
+                }
+            }
+
+            // Se non trovato nei musicians, controlla nella tabella `bands`
+            db.get(`SELECT * FROM bands WHERE email = ?`, [email], async (err, band) => {
+                if (err) {
+                    console.error("Errore durante il login (band):", err.message);
+                    return res.status(500).json({ error: "Errore durante il login" });
+                }
+
+                if (band) {
+                    const isPasswordValid = await bcrypt.compare(password, band.password);
+                    if (isPasswordValid) {
+                        // Reindirizza alla homepage
+                        return res.redirect('/index.html');
+                    } else {
+                        return res.status(401).json({ error: "Credenziali non valide" });
+                    }
+                }
+
+                // Se non trovato in entrambe le tabelle
+                return res.status(401).json({ error: "Credenziali non valide" });
+            });
+        });
+    } catch (error) {
+        console.error("Errore interno del server:", error.message);
+        res.status(500).json({ error: "Errore interno del server" });
+    }
+});
+
+
+
+
+
 
 
 app.get('/bands', (req, res) => {
