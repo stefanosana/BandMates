@@ -19,7 +19,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 const port = 3000;
 
-app.use(express.urlencoded({ extended : true }));
+app.use(express.urlencoded({ extended: true }));
 
 /*
 app.use((req, res, next) => {
@@ -38,7 +38,7 @@ const db = new sqlite3.Database('bandmates.db');
 // Endpoint per il signup
 app.post('/signup', async (req, res) => {
     const { userType, full_name, email, password, instrument, experience, description, location, looking_for, genre } = req.body;
-    
+
     // Verifica che tutti i campi comuni siano presenti
     if (!userType || !full_name || !email || !password || !location) {
         return res.status(400).json({ error: "I campi userType, full_name, email, password e location sono obbligatori" });
@@ -62,7 +62,7 @@ app.post('/signup', async (req, res) => {
         return res.status(400).json({ error: "Il campo genre è obbligatorio per le band" });
     }
 
-    
+
     try {
         // Hash della password
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -114,69 +114,54 @@ app.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({ error: "Email e password sono obbligatorie" });
+        console.log("Tutti i campi sono obbligatori")
+        return res.status(400).json({ success: false, message: "Tutti i campi sono obbligatori" });
     }
 
     try {
-        // Controlla l'utente nella tabella `musicians`
-        db.get(`SELECT * FROM musicians WHERE email = ?`, [email], async (err, musician) => {
-            if (err) {
-                console.error("Errore durante il login (musician):", err.message);
-                return res.status(500).json({ error: "Errore durante il login" });
-            }
-
-            if (musician) {
-                const isPasswordValid = await bcrypt.compare(password, musician.password);
-                if (isPasswordValid) {
-                    // Reindirizza alla homepage
-                    return res.redirect('/index.html');
-                } else {
-                    return res.status(401).json({ error: "Credenziali non valide" });
-                }
-            }
-
-            // Se non trovato nei musicians, controlla nella tabella `bands`
-            db.get(`SELECT * FROM bands WHERE email = ?`, [email], async (err, band) => {
+        db.get(
+            `SELECT * FROM musicians WHERE email = ? UNION SELECT * FROM bands WHERE email = ?`,
+            [email, email],
+            async (err, user) => {
                 if (err) {
-                    console.error("Errore durante il login (band):", err.message);
-                    return res.status(500).json({ error: "Errore durante il login" });
+                    console.error("Errore durante il controllo dell'utente:", err.message);
+                    
+                    return res.status(500).json({ success: false, message: "Errore interno del server" });
                 }
 
-                if (band) {
-                    const isPasswordValid = await bcrypt.compare(password, band.password);
-                    if (isPasswordValid) {
-                        // Reindirizza alla homepage
-                        return res.redirect('/index.html');
-                    } else {
-                        return res.status(401).json({ error: "Credenziali non valide" });
-                    }
+                if (!user) {
+                    return res.status(400).json({ success: false, message: "Credenziali errate" });
                 }
 
-                // Se non trovato in entrambe le tabelle
-                return res.status(401).json({ error: "Credenziali non valide" });
-            });
-        });
+                const passwordMatch = await bcrypt.compare(password, user.password);
+                if (!passwordMatch) {
+                    return res.status(400).json({ success: false, message: "Credenziali errate" });
+                }
+
+                // Login effettuato con successo
+                console.log(`Login effettuato correttamente ${user.full_name}`)
+                res.json({ success: true, message: `Login effettuato correttamente ${user.full_name}` });
+            }
+        );
     } catch (error) {
         console.error("Errore interno del server:", error.message);
-        res.status(500).json({ error: "Errore interno del server" });
+        res.status(500).json({ success: false, message: "Errore interno del server" });
     }
 });
 
 
 
 
-
-
-
+//Endpoint per trovare tutte le band
 app.get('/bands', (req, res) => {
     const query = `SELECT * FROM bands`;
-    
+
     db.all(query, (err, bands) => {
         if (err) {
             res.status(500).json({ error: "Errore durante il recupero delle band." });
             return;
         }
-        
+
         res.status(200).json(bands);
     });
 });

@@ -1,35 +1,48 @@
-document.querySelector('form').addEventListener('submit', async (event) => {
-    event.preventDefault(); // Evita il comportamento predefinito del form (refresh della pagina)
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.querySelector('form');
 
-    // Recupera i dati dal form
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
+    if (loginForm) {
+        loginForm.addEventListener('submit', login);
+    }
+});
+
+async function login(event) {
+    event.preventDefault();
+
+    // Recupero dei valori di email e password
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
     try {
-        // Effettua una richiesta POST al server
+        // Effettua la richiesta POST al server
         const response = await fetch('http://localhost:3000/login', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
         });
 
-        // Controlla la risposta del server
         if (!response.ok) {
-            const errorData = await response.json();
-            alert(`Errore: ${errorData.error}`);
+            // Legge il messaggio di errore dal server
+            const errorMessage = await response.json();
+            alert(`Errore durante il login: ${errorMessage.error}`);
             return;
         }
 
-        // Se il login è riuscito, elabora la risposta
+        // Recupera i dati della risposta
         const data = await response.json();
-        alert(`Benvenuto, ${data.fullName}! Sei loggato come ${data.userType}.`);
 
-        // Esempio: reindirizza l'utente a un'altra pagina
-        window.location.href = 'index.html'; // Modifica con il percorso corretto
+        let dataString = data.stringify();
+
+        // Mostra un alert con il messaggio di successo
+        alert(`Login effettuato correttamente: ${data.user}`);
+
+        // Reindirizza alla pagina principale
+        window.location.href = '/static/index.html'; // Modifica il percorso se necessario
     } catch (error) {
+        // Gestione degli errori non previsti
         console.error('Errore durante il login:', error);
-        alert('Si è verificato un errore. Riprova più tardi.');
+        alert('Si è verificato un errore durante il login.');
     }
-});
+}
