@@ -2,6 +2,9 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const cors = require('cors');
+require('dotenv').config();
+const jwt = require('jsonwebtoken');
+
 
 const app = express();
 const { swaggerUi, swaggerSpec } = require('./swagger');
@@ -114,39 +117,102 @@ app.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        console.log("Tutti i campi sono obbligatori")
-        return res.status(400).json({ success: false, message: "Tutti i campi sono obbligatori" });
+        return res.status(400).json({ error: "Email e password sono obbligatorie" });
     }
 
     try {
-        db.get(
-            `SELECT * FROM musicians WHERE email = ? UNION SELECT * FROM bands WHERE email = ?`,
-            [email, email],
-            async (err, user) => {
-                if (err) {
-                    console.error("Errore durante il controllo dell'utente:", err.message);
-                    
-                    return res.status(500).json({ success: false, message: "Errore interno del server" });
+        const user = await new Promise((resolve, reject) => {
+            db.get(
+                `SELECT userType, id, full_name, email, password 
+                 FROM (
+                     SELECT 'musician' AS userType, musician_id AS id, full_name, email, password FROM musicians 
+                     UNION 
+                     SELECT 'band' AS userType, band_id AS id, full_name, email, password FROM bands
+                 )
+                 WHERE email = ?`,
+                [email],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
                 }
+            );
+        });
 
-                if (!user) {
-                    return res.status(400).json({ success: false, message: "Credenziali errate" });
-                }
+        if (!user) {
+            return res.status(401).json({ error: "Email o password errati" });
+        }
 
-                const passwordMatch = await bcrypt.compare(password, user.password);
-                if (!passwordMatch) {
-                    return res.status(400).json({ success: false, message: "Credenziali errate" });
-                }
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ error: "Email o password errati" });
+        }
 
-                // Login effettuato con successo
-                console.log(`Login effettuato correttamente ${user.full_name}`)
-                res.json({ success: true, message: `Login effettuato correttamente ${user.full_name}` });
-            }
+        const token = jwt.sign(
+            { userId: user.id, userType: user.userType },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
         );
+
+        res.json({
+            message: "Accesso effettuato con successo",
+            userType: user.userType,
+            fullName: user.full_name,
+            email: user.email,
+            token: token
+        });
     } catch (error) {
-        console.error("Errore interno del server:", error.message);
-        res.status(500).json({ success: false, message: "Errore interno del server" });
+        console.error('Errore durante il login:', error);
+        res.status(500).json({ error: "Errore durante l'accesso" });
     }
+});
+
+
+app.get('/search', (req, res) => {
+    const { type, location, genre, instrument } = req.query;
+  
+    if (!type || (type !== 'band' && type !== 'musician')) {
+        return res.status(400).json({ error: "Il parametro 'type' è obbligatorio e deve essere 'band' o 'musician'" });
+    }
+  
+    let query;
+    let params = [];
+  
+    if (type === 'band') {
+        query = 'SELECT band_id, full_name, email, location, genre, description FROM bands WHERE 1=1';
+        if (location) {
+            query += ' AND location LIKE ?';
+            params.push(`%${location}%`);
+        }
+        if (genre) {
+            query += ' AND genre LIKE ?';
+            params.push(`%${genre}%`);
+        }
+    } else {
+        query = 'SELECT musician_id, full_name, email, location, instrument, experience FROM musicians WHERE 1=1';
+        if (location) {
+            query += ' AND location LIKE ?';
+            params.push(`%${location}%`);
+        }
+        if (instrument) {
+            query += ' AND instrument LIKE ?';
+            params.push(`%${instrument}%`);
+        }
+    }
+  
+    db.all(query, params, (err, results) => {
+        if (err) {
+            console.error("Errore durante la ricerca:", err.message);
+            return res.status(500).json({ error: "Errore interno del server durante la ricerca" });
+        }
+        res.json({
+            status: 200,
+            message: "Ricerca avvenuta con successo",
+            data: {
+                results: results,
+                total_results: results.length
+            }
+        });
+    });
 });
 
 
