@@ -1,2 +1,18 @@
+# Dependencies
 /node_modules
-/env
+npm-debug.log
+yarn-error.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# IDE/Editor Folders
+.vscode/
+.idea/
+*.swp
+*.swo

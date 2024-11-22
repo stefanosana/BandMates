@@ -5,7 +5,6 @@ const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-
 const app = express();
 const { swaggerUi, swaggerSpec } = require('./swagger');
 const { urlencoded } = require('body-parser');
@@ -16,21 +15,10 @@ const corsOptions = {
     credentials: false,
 };
 
-
-
-
 app.use(cors(corsOptions));
 const port = 3000;
 
 app.use(express.urlencoded({ extended: true }));
-
-/*
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "https://cuddly-space-fortnight-4jqgxrvjpqxw37xgv-3000.app.github.dev/");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});
-*/
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Configurazione Swagger
 
@@ -166,44 +154,82 @@ app.post('/login', async (req, res) => {
     }
 });
 
-
 app.get('/search', (req, res) => {
-    const { type, location, genre, instrument } = req.query;
+    const { query, type, location, genre, instrument, experience } = req.query;
+
+    let sqlQuery = `
+      SELECT 
+        'musician' AS type,
+        musician_id AS id,
+        full_name,
+        email,
+        location,
+        instrument,
+        experience,
+        NULL AS genre
+      FROM 
+        musicians
+      WHERE 1=1
   
-    if (!type || (type !== 'band' && type !== 'musician')) {
-        return res.status(400).json({ error: "Il parametro 'type' è obbligatorio e deve essere 'band' o 'musician'" });
+      UNION ALL
+  
+      SELECT 
+        'band' AS type,
+        band_id AS id,
+        full_name,
+        email,
+        location,
+        NULL AS instrument,
+        NULL AS experience,
+        genre
+      FROM 
+        bands
+      WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (query) {
+        sqlQuery = sqlQuery.replace('WHERE 1=1', `WHERE (full_name LIKE ? OR email LIKE ?)`);
+        params.push(`%${query}%`, `%${query}%`);
+        params.push(`%${query}%`, `%${query}%`); // Ripetuto per la parte UNION
     }
-  
-    let query;
-    let params = [];
-  
-    if (type === 'band') {
-        query = 'SELECT band_id, full_name, email, location, genre, description FROM bands WHERE 1=1';
-        if (location) {
-            query += ' AND location LIKE ?';
-            params.push(`%${location}%`);
-        }
-        if (genre) {
-            query += ' AND genre LIKE ?';
-            params.push(`%${genre}%`);
-        }
-    } else {
-        query = 'SELECT musician_id, full_name, email, location, instrument, experience FROM musicians WHERE 1=1';
-        if (location) {
-            query += ' AND location LIKE ?';
-            params.push(`%${location}%`);
-        }
-        if (instrument) {
-            query += ' AND instrument LIKE ?';
-            params.push(`%${instrument}%`);
-        }
+
+    if (type) {
+        sqlQuery += ` AND type = ?`;
+        params.push(type);
     }
-  
-    db.all(query, params, (err, results) => {
+
+    if (location) {
+        sqlQuery += ` AND location LIKE ?`;
+        params.push(`%${location}%`);
+    }
+
+    if (genre) {
+        sqlQuery += ` AND (genre LIKE ? OR genre IS NULL)`;
+        params.push(`%${genre}%`);
+    }
+
+    if (instrument) {
+        sqlQuery += ` AND (instrument LIKE ? OR instrument IS NULL)`;
+        params.push(`%${instrument}%`);
+    }
+
+    if (experience) {
+        sqlQuery += ` AND (experience >= ? OR experience IS NULL)`;
+        params.push(parseInt(experience));
+    }
+
+    db.all(sqlQuery, params, (err, results) => {
         if (err) {
             console.error("Errore durante la ricerca:", err.message);
-            return res.status(500).json({ error: "Errore interno del server durante la ricerca" });
+            return res.status(500).json({
+                status: 500,
+                message: "Errore interno del server durante la ricerca",
+                data: null
+            });
         }
+
         res.json({
             status: 200,
             message: "Ricerca avvenuta con successo",
@@ -214,9 +240,6 @@ app.get('/search', (req, res) => {
         });
     });
 });
-
-
-
 
 //Endpoint per trovare tutte le band
 app.get('/bands', (req, res) => {
@@ -247,7 +270,7 @@ app.get('/bands/location/:location', (req, res) => {
     });
 });
 
-
+module.exports = app;
 app.use('/static', express.static('public')); // Servi i file statici dalla cartella 'public'
 // Avvio del server
 app.listen(port, () => {
