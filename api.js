@@ -26,7 +26,17 @@ app.use(express.json())
 // Connessione al database SQLite
 const db = new sqlite3.Database('bandmates.db');
 
-// Endpoint per il signup
+function isAdmin(req, res, next) {
+    if (req.user && req.user.role === 'admin') {
+        next(); // L'utente è admin, prosegui
+    } else {
+        res.status(403).json({ error: "Accesso negato. Solo gli admin possono accedere." });
+    }
+}
+
+// Usa il middleware su tutte le route dell'admin
+app.use('/admin', isAdmin);
+
 app.post('/signup', async (req, res) => {
     const { userType, full_name, email, password, instrument, experience, description, location, looking_for, genre } = req.body;
 
@@ -241,7 +251,6 @@ app.get('/search', (req, res) => {
     });
 });
 
-//Endpoint per trovare tutte le band
 app.get('/bands', (req, res) => {
     const query = `SELECT * FROM bands`;
 
@@ -255,7 +264,6 @@ app.get('/bands', (req, res) => {
     });
 });
 
-// Endpoint per ottenere band filtrate per location
 app.get('/bands/location/:location', (req, res) => {
     const location = req.params.location;
     const query = `SELECT * FROM bands WHERE location = ?`;
@@ -270,6 +278,27 @@ app.get('/bands/location/:location', (req, res) => {
     });
 });
 
+app.get('/admin/users', isAdmin, (req, res) => {
+    db.all(`SELECT * FROM musicians UNION SELECT * FROM bands`, (err, rows) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: 'Errore nel recupero degli utenti' });
+        }
+        res.json(rows);
+    });
+});
+
+app.delete('/admin/delete-user/:id', isAdmin, (req, res) => {
+    const { id } = req.params;
+    db.run(`DELETE FROM musicians WHERE musician_id = ?`, [id], function(err) {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: 'Errore durante l\'eliminazione dell\'utente' });
+        }
+        res.json({ message: `Utente con ID ${id} eliminato.` });
+    });
+});
+ 
 module.exports = app;
 app.use('/static', express.static('public')); // Servi i file statici dalla cartella 'public'
 // Avvio del server
