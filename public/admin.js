@@ -1,4 +1,3 @@
-// Carica la lista utenti
 fetch('/admin/users')
     .then(response => response.json())
     .then(users => {

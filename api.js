@@ -34,7 +34,6 @@ function isAdmin(req, res, next) {
     }
 }
 
-// Usa il middleware su tutte le route dell'admin
 app.use('/admin', isAdmin);
 
 app.post('/signup', async (req, res) => {
@@ -114,11 +113,13 @@ app.post('/signup', async (req, res) => {
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
+    // Verifica che email e password siano forniti
     if (!email || !password) {
         return res.status(400).json({ error: "Email e password sono obbligatorie" });
     }
 
     try {
+        // Cerca l'utente nel database (sia tra i musicisti che tra le band)
         const user = await new Promise((resolve, reject) => {
             db.get(
                 `SELECT userType, id, full_name, email, password 
@@ -136,21 +137,35 @@ app.post('/login', async (req, res) => {
             );
         });
 
+        // Se l'utente non esiste, restituisci un errore
         if (!user) {
             return res.status(401).json({ error: "Email o password errati" });
         }
 
+        // Verifica la password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ error: "Email o password errati" });
         }
 
+        // Verifica che JWT_SECRET sia definito
+        if (!process.env.JWT_SECRET) {
+            console.error('JWT_SECRET non è definito nelle variabili d\'ambiente');
+            return res.status(500).json({ error: "Errore di configurazione del server" });
+        }
+
+        // Genera il token JWT
         const token = jwt.sign(
-            { userId: user.id, userType: user.userType },
+            { 
+                userId: user.id, 
+                userType: user.userType,
+                email: user.email
+            },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
+        // Invia la risposta di successo
         res.json({
             message: "Accesso effettuato con successo",
             userType: user.userType,
@@ -164,92 +179,109 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.get('/search', (req, res) => {
-    const { query, type, location, genre, instrument, experience } = req.query;
-
-    let sqlQuery = `
-      SELECT 
-        'musician' AS type,
-        musician_id AS id,
-        full_name,
-        email,
-        location,
-        instrument,
-        experience,
-        NULL AS genre
-      FROM 
-        musicians
-      WHERE 1=1
+app.get('/search', async (req, res) => {
+    try {
+      const query = req.query.q || '';
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const offset = (page - 1) * limit;
   
-      UNION ALL
+      const filters = {
+        type: req.query.type,
+        location: req.query.location,
+        genre: req.query.genre,
+        instrument: req.query.instrument,
+        minExperience: req.query.minExperience,
+        maxExperience: req.query.maxExperience
+      };
   
-      SELECT 
-        'band' AS type,
-        band_id AS id,
-        full_name,
-        email,
-        location,
-        NULL AS instrument,
-        NULL AS experience,
-        genre
-      FROM 
-        bands
-      WHERE 1=1
-    `;
-
-    const params = [];
-
-    if (query) {
-        sqlQuery = sqlQuery.replace('WHERE 1=1', `WHERE (full_name LIKE ? OR email LIKE ?)`);
-        params.push(`%${query}%`, `%${query}%`);
-        params.push(`%${query}%`, `%${query}%`); // Ripetuto per la parte UNION
-    }
-
-    if (type) {
-        sqlQuery += ` AND type = ?`;
-        params.push(type);
-    }
-
-    if (location) {
-        sqlQuery += ` AND location LIKE ?`;
-        params.push(`%${location}%`);
-    }
-
-    if (genre) {
-        sqlQuery += ` AND (genre LIKE ? OR genre IS NULL)`;
-        params.push(`%${genre}%`);
-    }
-
-    if (instrument) {
-        sqlQuery += ` AND (instrument LIKE ? OR instrument IS NULL)`;
-        params.push(`%${instrument}%`);
-    }
-
-    if (experience) {
-        sqlQuery += ` AND (experience >= ? OR experience IS NULL)`;
-        params.push(parseInt(experience));
-    }
-
-    db.all(sqlQuery, params, (err, results) => {
-        if (err) {
-            console.error("Errore durante la ricerca:", err.message);
-            return res.status(500).json({
-                status: 500,
-                message: "Errore interno del server durante la ricerca",
-                data: null
-            });
-        }
-
-        res.json({
-            status: 200,
-            message: "Ricerca avvenuta con successo",
-            data: {
-                results: results,
-                total_results: results.length
-            }
+      let sqlQuery = `
+        SELECT 
+          CASE 
+            WHEN m.musician_id IS NOT NULL THEN 'musician'
+            ELSE 'band'
+          END AS type,
+          COALESCE(m.musician_id, b.band_id) AS id,
+          COALESCE(m.full_name, b.full_name) AS full_name,
+          COALESCE(m.email, b.email) AS email,
+          COALESCE(m.location, b.location) AS location,
+          m.instrument,
+          m.experience,
+          b.genre
+        FROM 
+          (SELECT * FROM musicians UNION ALL SELECT * FROM bands) AS combined
+        LEFT JOIN musicians m ON combined.musician_id = m.musician_id
+        LEFT JOIN bands b ON combined.band_id = b.band_id
+        WHERE 1=1
+      `;
+  
+      const params = [];
+  
+      // Text search
+      if (query) {
+        sqlQuery += ` AND (m.full_name LIKE ? OR b.full_name LIKE ? OR m.instrument LIKE ? OR b.genre LIKE ?)`;
+        params.push(`%${query}%`, `%${query}%`, `%${query}%`, `%${query}%`);
+      }
+  
+      // Apply filters
+      if (filters.type) {
+        sqlQuery += ` AND (CASE WHEN m.musician_id IS NOT NULL THEN 'musician' ELSE 'band' END) = ?`;
+        params.push(filters.type);
+      }
+      if (filters.location) {
+        sqlQuery += ` AND COALESCE(m.location, b.location) LIKE ?`;
+        params.push(`%${filters.location}%`);
+      }
+      if (filters.genre) {
+        sqlQuery += ` AND b.genre LIKE ?`;
+        params.push(`%${filters.genre}%`);
+      }
+      if (filters.instrument) {
+        sqlQuery += ` AND m.instrument LIKE ?`;
+        params.push(`%${filters.instrument}%`);
+      }
+      if (filters.minExperience) {
+        sqlQuery += ` AND m.experience >= ?`;
+        params.push(parseInt(filters.minExperience));
+      }
+      if (filters.maxExperience) {
+        sqlQuery += ` AND m.experience <= ?`;
+        params.push(parseInt(filters.maxExperience));
+      }
+  
+      // Count total results
+      const countQuery = `SELECT COUNT(*) as total FROM (${sqlQuery})`;
+      const totalResults = await new Promise((resolve, reject) => {
+        db.get(countQuery, params, (err, row) => {
+          if (err) reject(err);
+          else resolve(row.total);
         });
-    });
-});
+      });
+  
+      // Add pagination
+      sqlQuery += ` LIMIT ? OFFSET ?`;
+      params.push(limit, offset);
+  
+      // Execute the search
+      const results = await new Promise((resolve, reject) => {
+        db.all(sqlQuery, params, (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+  
+      res.json({
+        results,
+        currentPage: page,
+        totalPages: Math.ceil(totalResults / limit),
+        totalResults
+      });
+  
+    } catch (error) {
+      console.error('Error in search endpoint:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
 
 app.get('/bands', (req, res) => {
     const query = `SELECT * FROM bands`;
