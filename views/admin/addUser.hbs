@@ -10,23 +10,104 @@
 <body>
     <h1>Aggiungi Utente</h1>
     <form action="/admin/users/add" method="POST">
-        <label for="userType">Tipo Utente:</label>
-        <select name="userType" id="userType" required>
-            <option value="musician">Musicista</option>
-            <option value="band">Band</option>
-        </select>
-        <br>
-        <label for="fullName">Nome Completo:</label>
-        <input type="text" name="fullName" id="fullName" required>
-        <br>
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email" required>
-        <br>
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password" required>
-        <br>
-        <button type="submit">Aggiungi</button>
+        <!-- Tipo di account: Musicista o Band -->
+        <div class="mb-3">
+            <label for="userType" class="form-label">Nuovo Utente</label>
+            <select class="form-select" id="userType" name="userType">
+                <option value="musician">Musicista Singolo</option>
+                <option value="band">Band</option>
+            </select>
+        </div>
+
+        <!-- Nome completo o Nome della Band -->
+        <div class="mb-3">
+            <label for="name" class="form-label">Nome Completo / Nome della Band</label>
+            <input type="text" class="form-control" id="name" name="name"
+                placeholder="Inserisci il tuo nome o quello della band">
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Inserisci la tua email">
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Crea una password">
+        </div>
+
+        <!-- Strumento (solo per musicisti) -->
+        <div id="musicianFields" style="display: none;">
+            <div class="mb-3">
+                <label for="instrument" class="form-label">Strumento Suonato</label>
+                <input type="text" class="form-control" id="instrument" name="instrument"
+                    placeholder="Inserisci lo strumento suonato (es. chitarra, batteria)">
+            </div>
+
+            <!-- Livello di abilità -->
+            <div class="mb-3">
+                <label for="skillLevel" class="form-label">Livello di Abilità</label>
+                <select class="form-select" id="skillLevel" name="skillLevel">
+                    <option value="beginner">Principiante</option>
+                    <option value="intermediate">Intermedio</option>
+                    <option value="advanced">Avanzato</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Descrizione -->
+        <div class="mb-3">
+            <label for="description" class="form-label">Descrizione</label>
+            <textarea class="form-control" id="description" name="description"
+                placeholder="Descrivi te stesso o la band"></textarea>
+        </div>
+
+        <!-- Cercando (solo per band) -->
+        <div id="bandFields" style="display: none;">
+            <div class="mb-3">
+                <label for="lookingFor" class="form-label">Cercando</label>
+                <input type="text" class="form-control" id="lookingFor" name="lookingFor"
+                    placeholder="Inserisci che tipo di musicisti stai cercando">
+            </div>
+
+            <!-- Genere (solo per band) -->
+            <div class="mb-3" id="bandFieldsGenre" style="display: none;">
+                <label for="genre" class="form-label">Genere</label>
+                <input type="text" class="form-control" id="genre" name="genre"
+                    placeholder="Inserisci il genere musicale della band (es. rock, jazz, pop)">
+            </div>
+        </div>
+
+        <!-- Posizione -->
+        <div class="mb-3">
+            <label for="location" class="form-label">Posizione</label>
+            <input type="text" class="form-control" id="location" name="location"
+                placeholder="Inserisci la tua città o posizione attuale">
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Aggiugni</button>
     </form>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleButton = document.getElementById('toggleAdvanced');
+            const advancedSearch = document.getElementById('advancedSearch');
+
+            toggleButton.addEventListener('click', function () {
+                if (advancedSearch.style.display === 'none' || advancedSearch.style.display === '') {
+                    advancedSearch.style.display = 'block';
+                    toggleButton.textContent = 'Nascondi Ricerca Avanzata';
+                } else {
+                    advancedSearch.style.display = 'none';
+                    toggleButton.textContent = 'Ricerca Avanzata';
+                }
+            });
+        });
+    </script>
+
 </body>
 
 </html>
