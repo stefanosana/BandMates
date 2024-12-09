@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Aggiungi Utente</title>
+</head>
+
+<body>
+    <h1>Aggiungi Utente</h1>
+    <form action="/admin/users/add" method="POST">
+        <label for="userType">Tipo Utente:</label>
+        <select name="userType" id="userType" required>
+            <option value="musician">Musicista</option>
+            <option value="band">Band</option>
+        </select>
+        <br>
+        <label for="fullName">Nome Completo:</label>
+        <input type="text" name="fullName" id="fullName" required>
+        <br>
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" required>
+        <br>
+        <label for="password">Password:</label>
+        <input type="password" name="password" id="password" required>
+        <br>
+        <button type="submit">Aggiungi</button>
+    </form>
+</body>
+
+</html>

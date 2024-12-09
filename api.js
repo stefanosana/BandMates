@@ -168,6 +168,12 @@ app.post('/login', async (req, res) => {
         req.session.role = user.userType;
         req.session.userId = user.id;
 
+        if (user.userType === 'admin') {
+            res.redirect('/admin/dashboard');
+        } else {
+            res.redirect('/home');
+        }
+
         // Reindirizza alla home dopo il login riuscito
         return res.redirect('/home');
 
@@ -181,6 +187,158 @@ app.get('/logout', (req, res) => {
     req.session.loggedin = false;
     res.redirect('/login');
 });
+
+app.get('/admin/dashboard', (req, res) => {
+    if (req.session.role === 'admin') {
+        res.render('admin/dashboard');
+    } else {
+        res.status(403).send('Accesso negato');
+    }
+});
+
+app.get('/admin/users', (req, res) => {
+    if (req.session.role === 'admin') {
+        // Recupera utenti dal database
+        db.all('SELECT * FROM musicians UNION SELECT * FROM bands', [], (err, rows) => {
+            if (err) {
+                return res.status(500).send('Errore nel recupero utenti');
+            }
+            res.render('admin/users', { users: rows });
+        });
+    } else {
+        res.status(403).send('Accesso negato');
+    }
+});
+
+app.get('/admin/users/add', (req, res) => {
+    if (req.session.role === 'admin') {
+        res.render('admin/addUser');
+    } else {
+        res.status(403).send('Accesso negato');
+    }
+});
+
+app.post('/admin/users/add', async (req, res) => {
+    const { userType, fullName, email, password } = req.body;
+
+    if (!userType || !fullName || !email || !password) {
+        return res.status(400).send('Tutti i campi sono obbligatori.');
+    }
+
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        if (userType === 'musician') {
+            db.run(
+                `INSERT INTO musicians (full_name, email, password) VALUES (?, ?, ?)`,
+                [fullName, email, hashedPassword],
+                (err) => {
+                    if (err) return res.status(500).send('Errore nel salvataggio');
+                    res.redirect('/admin/users');
+                }
+            );
+        } else if (userType === 'band') {
+            db.run(
+                `INSERT INTO bands (full_name, email, password) VALUES (?, ?, ?)`,
+                [fullName, email, hashedPassword],
+                (err) => {
+                    if (err) return res.status(500).send('Errore nel salvataggio');
+                    res.redirect('/admin/users');
+                }
+            );
+        } else {
+            res.status(400).send('Tipo utente non valido.');
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Errore nel salvataggio.');
+    }
+});
+
+app.get('/admin/users/edit/:id', (req, res) => {
+    if (req.session.role === 'admin') {
+        const { id } = req.params;
+
+        db.get(
+            `SELECT 'musician' AS userType, musician_id AS id, full_name, email FROM musicians WHERE musician_id = ?
+             UNION
+             SELECT 'band' AS userType, band_id AS id, full_name, email FROM bands WHERE band_id = ?`,
+            [id, id],
+            (err, row) => {
+                if (err || !row) return res.status(404).send('Utente non trovato');
+                res.render('admin/editUser', { user: row });
+            }
+        );
+    } else {
+        res.status(403).send('Accesso negato');
+    }
+});
+
+app.post('/admin/users/edit/:id', (req, res) => {
+    const { id } = req.params;
+    const { fullName, email, userType } = req.body;
+
+    if (!fullName || !email) {
+        return res.status(400).send('Tutti i campi sono obbligatori.');
+    }
+
+    const updateQuery = userType === 'musician'
+        ? `UPDATE musicians SET full_name = ?, email = ? WHERE musician_id = ?`
+        : `UPDATE bands SET full_name = ?, email = ? WHERE band_id = ?`;
+
+    db.run(updateQuery, [fullName, email, id], (err) => {
+        if (err) return res.status(500).send('Errore nella modifica');
+        res.redirect('/admin/users');
+    });
+});
+
+app.get('/admin/users/delete/:id', (req, res) => {
+    if (req.session.role === 'admin') {
+        const { id } = req.params;
+
+        db.run(
+            `DELETE FROM musicians WHERE musician_id = ?`,
+            [id],
+            function (err) {
+                if (!this.changes) {
+                    // Se non trova in musicians, tenta di eliminare in bands
+                    db.run(
+                        `DELETE FROM bands WHERE band_id = ?`,
+                        [id],
+                        function (err) {
+                            if (!this.changes) {
+                                return res.status(404).send('Utente non trovato');
+                            }
+                            res.redirect('/admin/users');
+                        }
+                    );
+                } else if (err) {
+                    return res.status(500).send('Errore nella cancellazione');
+                } else {
+                    res.redirect('/admin/users');
+                }
+            }
+        );
+    } else {
+        res.status(403).send('Accesso negato');
+    }
+});
+
+
+app.get('/admin/feedback', (req, res) => {
+    if (req.session.role === 'admin') {
+        // Recupera feedback dal database
+        db.all('SELECT * FROM feedback', [], (err, rows) => {
+            if (err) {
+                return res.status(500).send('Errore nel recupero feedback');
+            }
+            res.render('admin/feedback', { feedbacks: rows });
+        });
+    } else {
+        res.status(403).send('Accesso negato');
+    }
+});
+
 
 app.get('/home', (req, res) => {
     if (req.session.loggedin) {

@@ -1,0 +1,24 @@
+<h1>Gestione Utenti</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Tipo Utente</th>
+            <th>Azioni</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each users}}
+        <tr>
+            <td>{{this.full_name}}</td>
+            <td>{{this.email}}</td>
+            <td>{{this.userType}}</td>
+            <td>
+                <a href="/admin/users/edit/{{this.id}}">Modifica</a> |
+                <a href="/admin/users/delete/{{this.id}}" onclick="return confirm('Sei sicuro?')">Elimina</a>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>

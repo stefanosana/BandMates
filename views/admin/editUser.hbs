@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Modifica Utente</title>
+</head>
+
+<body>
+    <h1>Modifica Utente</h1>
+    <form action="/admin/users/edit/{{user.id}}" method="POST">
+        <input type="hidden" name="userType" value="{{user.userType}}">
+        <label for="fullName">Nome Completo:</label>
+        <input type="text" name="fullName" id="fullName" value="{{user.full_name}}">
+        <br>
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" value="{{user.email}}">
+        <br>
+        <button type="submit">Salva Modifiche</button>
+    </form>
+
+</body>
+
+</html>
