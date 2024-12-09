@@ -17,17 +17,19 @@ const corsOptions = {
 };
 //const mock = require('./DBMock.js');
 //const db = new mock();
+const port = 3000;
 app.set('view engine', 'hbs')
 
 app.use(cors(corsOptions));
-
-const port = 3000;
+// Middleware di gestione degli errori
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).render('error', { message: 'Si è verificato un errore interno del server' });
+});
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
-
 const db = new sqlite3.Database('bandmates.db');
-
 function isAdmin(req, res, next) {
     if (req.user && req.user.role === 'admin') {
         next(); // L'utente è admin, prosegui
@@ -35,7 +37,6 @@ function isAdmin(req, res, next) {
         res.status(403).json({ error: "Accesso negato. Solo gli admin possono accedere." });
     }
 }
-
 app.use('/admin', isAdmin);
 
 app.post('/signup', async (req, res) => {
@@ -113,7 +114,7 @@ app.post('/signup', async (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    if(req.session.loggedin) {
+    if (req.session.loggedin) {
         res.redirect('/home');
     } else {
         res.sendFile(path.join(__dirname, 'public', 'login.html'));
@@ -168,11 +169,11 @@ app.post('/login', async (req, res) => {
         req.session.userId = user.id;
 
         // Reindirizza alla home dopo il login riuscito
-        res.redirect('/home');
+        return res.redirect('/home');
 
     } catch (error) {
         console.error('Errore durante il login:', error);
-        res.status(500).render('error', { message: "Errore durante l'accesso" });
+        return res.status(500).render('error', { message: "Errore durante l'accesso" });
     }
 });
 
