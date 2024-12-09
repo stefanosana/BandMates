@@ -3,6 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const cors = require('cors');
 const hbs = require("handlebars");
+const path = require('path');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
@@ -111,12 +112,24 @@ app.post('/signup', async (req, res) => {
     }
 });
 
+app.get('/login', (req, res) => {
+    if(req.session.loggedin) {
+        res.redirect('/home');
+    } else {
+        res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    }
+});
+
+// POST endpoint per il login
 app.post('/login', async (req, res) => {
+    if (req.body === undefined) {
+        return res.status(400).render('error', { message: 'Undefined body' });
+    }
+
     const { email, password } = req.body;
 
-    // Controlla che email e password siano forniti
     if (!email || !password) {
-        return res.status(400).json({ error: "Email e password sono obbligatorie" });
+        return res.status(400).render('error', { message: 'Email e password sono obbligatorie' });
     }
 
     try {
@@ -132,56 +145,36 @@ app.post('/login', async (req, res) => {
                  WHERE email = ?`,
                 [email],
                 (err, row) => {
-                    if (err) reject(err); // Gestisce l'errore del database
-                    else resolve(row); // Restituisce il risultato
+                    if (err) reject(err);
+                    else resolve(row);
                 }
             );
         });
 
-        // Verifica se l'utente esiste
         if (!user) {
-            return res.status(401).json({ error: "Email o password errati" });
+            return res.status(401).render('error', { message: 'Email o password errati' });
         }
 
         // Verifica la password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({ error: "Password Errata" });
+            return res.status(401).render('error', { message: 'Password Errata' });
         }
 
-        // Genera un token JWT
-        const token = jwt.sign(
-            { userId: user.id, userType: user.userType, email: user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
-
-        // Salva i dettagli di sessione
-        req.session.loggedIn = true;
+        // Imposta i dati di sessione
+        req.session.loggedin = true;
         req.session.name = user.full_name;
         req.session.role = user.userType;
         req.session.userId = user.id;
-        req.session.token = token;
 
-        res.json({
-            message: "Accesso effettuato con successo",
-            userType: user.userType,
-            fullName: user.full_name,
-            email: user.email,
-            token: token
-        });
-
-        // Reindirizza alla homepage
-        return res.redirect('/home');
+        // Reindirizza alla home dopo il login riuscito
+        res.redirect('/home');
 
     } catch (error) {
         console.error('Errore durante il login:', error);
-        // Gestione degli errori generici
-        return res.status(500).json({ error: "Errore durante l'accesso" });
+        res.status(500).render('error', { message: "Errore durante l'accesso" });
     }
 });
-
-
 
 app.get('/logout', (req, res) => {
     req.session.loggedin = false;
@@ -190,13 +183,13 @@ app.get('/logout', (req, res) => {
 
 app.get('/home', (req, res) => {
     if (req.session.loggedin) {
-        if(req.session.userType === 'admin') {
+        if (req.session.userType === 'admin') {
             res.render('admin/home', {
                 fullName: req.session.fullName,
                 userType: req.session.userType,
                 message: req.session.message
             });
-        }else {
+        } else {
             res.render('home', {
                 fullName: req.session.name,
                 userType: req.session.role,

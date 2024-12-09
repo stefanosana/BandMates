@@ -17,25 +17,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch('http://localhost:3000/login', {
+            const response = await fetch('/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
+                credentials: 'include' // Importante per gestire i cookie di sessione
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Errore durante il login');
+            if (response.redirected) {
+                // Il server ha reindirizzato, seguiamo il reindirizzamento
+                window.location.href = response.url;
+                return;
             }
 
-            // Salva il token JWT nel localStorage
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userType', data.userType);
-            localStorage.setItem('fullName', data.fullName);
-            
-            alert(`Benvenuto, ${data.fullName}!`);
-            window.location.href = '/static/index.html'; // Assicurati che questo percorso sia corretto
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Errore durante il login');
+            }
+
+            // Se la risposta è ok ma non c'è stato un reindirizzamento,
+            // possiamo assumere che il login sia avvenuto con successo
+            window.location.href = '/home';
         } catch (error) {
             console.error('Errore durante il login:', error.message);
             alert(`Errore durante il login: ${error.message}`);
