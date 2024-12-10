@@ -183,23 +183,19 @@ BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove co
 ### Requisiti Funzionali
 
 - **Funzionalità di Messaggistica**:
-  - Messaggistica in tempo reale con notifiche istantanee.
   - Supporto per chat singole e di gruppo.
-  - Funzionalità di media sharing per scambio di demo o brani musicali.
 
 - **Avere dei criteri di ricerca**:
   - Ricerca per località geografica.
   - Filtri per genere musicale, strumenti suonati, anni di esperienza e disponibilità oraria.
-  - Opzione per salvare ricerche preferite o impostare avvisi per nuove corrispondenze.
+  - Opzione per salvare ricerche preferite.
 
 - **Funzionalità di Login/Register**:
-  - Registrazione e login tramite email e password o autenticazione tramite social media.
-  - Recupero password e gestione profilo.
-  - Verifica tramite email per la validazione dell'account.
+  - Registrazione e login tramite email e password.
+  - Gestione profilo.
 
 - **Implementare il Feedback e Supporto**:
   - Sistema di feedback per segnalare bug, richiedere nuove funzionalità o assistenza.
-  - Valutazione dell'esperienza in maniera continuativa.
  
 - **Postare annunci di ricerca musicista**:
   - Le band possono postare degli annunci in cui chiedono che tipo di muscista serve, con che strumento... 
@@ -215,15 +211,15 @@ BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove co
 
 - **Responsive Design e Accessibilità**:
   - Design responsive per supportare l'uso su dispositivi mobili e desktop.
-  - Conformità alle linee guida sull'accessibilità per garantire l'accesso a utenti con disabilità.
 
 - **Integrazione con SQLite**:
   - Per l'archiviazione dei dati.
 
 - **Conoscenza Linguaggi di Programmazione**:
-  - **HTML, CSS**: per il front-end responsive.
+  - **HTML, CSS, BootStrap**: per il front-end responsive.
   - **JavaScript**: per l’interattività e la gestione della messaggistica.
   - **SQL**: per la gestione dei dati.
+  - **HandleBars**: Per implementare le sessioni.
 
 ---
 
