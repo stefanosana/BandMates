@@ -324,7 +324,6 @@ app.get('/admin/users/delete/:id', (req, res) => {
     }
 });
 
-
 app.get('/admin/feedback', (req, res) => {
     if (req.session.role === 'admin') {
         // Recupera feedback dal database
