@@ -15,6 +15,12 @@ const corsOptions = {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: false,
 };
+app.use(session({
+    secret: 'session',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === "production" }
+}));
 //const mock = require('./DBMock.js');
 //const db = new mock();
 const port = 3000;
@@ -168,14 +174,14 @@ app.post('/login', async (req, res) => {
         req.session.role = user.userType;
         req.session.userId = user.id;
 
+        // Determina la destinazione del reindirizzamento
+        let redirectUrl = '/home';
         if (user.userType === 'admin') {
-            res.redirect('/admin/dashboard');
-        } else {
-            res.redirect('/home');
+            redirectUrl = '/admin/dashboard';
         }
 
-        // Reindirizza alla home dopo il login riuscito
-        return res.redirect('/home');
+        // Reindirizza alla destinazione appropriata dopo il login riuscito
+        return res.redirect(redirectUrl);
 
     } catch (error) {
         console.error('Errore durante il login:', error);
@@ -187,6 +193,23 @@ app.get('/logout', (req, res) => {
     req.session.loggedin = false;
     res.redirect('/login');
 });
+
+//rotta get per la pagina di area personale
+app.get('/areapersonale', (req, res) => {
+    if (req.session.loggedin) {
+        res.sendFile(path.join(__dirname, 'views', 'areapersonale.hbs'));
+    }
+    else {
+        res.redirect('/login');
+    }
+});
+
+//rotta get per la pagina di registrazione
+//app.get('/signup', (req, res) => {
+    //res.sendFile(path.join(__dirname, 'public/static', 'signup.html'));
+    //manda al file static singup.html
+
+//});
 
 app.get('/admin/dashboard', (req, res) => {
     if (req.session.role === 'admin') {
@@ -337,7 +360,6 @@ app.get('/admin/feedback', (req, res) => {
         res.status(403).send('Accesso negato');
     }
 });
-
 
 app.get('/home', (req, res) => {
     if (req.session.loggedin) {
@@ -512,8 +534,10 @@ app.delete('/admin/delete-user/:id', isAdmin, (req, res) => {
     });
 });
 
+
+
 module.exports = app;
-app.use('/static', express.static('public')); // Servi i file statici dalla cartella 'public'
+app.use(express.static('public'));
 // Avvio del server
 app.listen(port, () => {
     console.log(`Server in ascolto sulla porta ${port}`);
