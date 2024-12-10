@@ -198,7 +198,10 @@ BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove co
   - Sistema di feedback per segnalare bug, richiedere nuove funzionalità o assistenza.
  
 - **Postare annunci di ricerca musicista**:
-  - Le band possono postare degli annunci in cui chiedono che tipo di muscista serve, con che strumento... 
+  - Le band possono postare degli annunci in cui chiedono che tipo di muscista serve, con che strumento...
+
+- **Dashboard per Admin**:
+  - Se si accede con un account admin si accede al pannello di controllo per amministratori.
 
 ---
 
