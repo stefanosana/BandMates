@@ -7,7 +7,7 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const instrument = userType === 'musician' ? document.getElementById('instrument').value : '';
-    const skillLevel = userType === 'musician' ? document.getElementById('skillLevel').value : '';  /////////////////////////////////
+    const skillLevel = userType === 'musician' ? document.getElementById('skillLevel').value : ''; 
     const description = document.getElementById('description').value;
     const lookingFor = userType === 'band' ? document.getElementById('lookingFor').value : '';
     const location = document.getElementById('location').value;

@@ -21,6 +21,7 @@ app.use(session({
     saveUninitialized: true,
     cookie: { secure: process.env.NODE_ENV === "production" }
 }));
+
 //const mock = require('./DBMock.js');
 //const db = new mock();
 const port = 3000;
@@ -70,7 +71,6 @@ app.post('/signup', async (req, res) => {
     if (userType === "band" && !genre) {
         return res.status(400).json({ error: "Il campo genre è obbligatorio per le band" });
     }
-
 
     try {
         // Hash della password
@@ -195,21 +195,20 @@ app.get('/logout', (req, res) => {
 });
 
 //rotta get per la pagina di area personale
-app.get('/areapersonale', (req, res) => {
-    if (req.session.loggedin) {
-        res.sendFile(path.join(__dirname, 'views', 'areapersonale.hbs'));
+app.get('/area-personale', (req, res) => {
+    // Verifica se l'utente è autenticato
+    if (!req.session.loggedin) {
+        return res.redirect('/login');
     }
-    else {
-        res.redirect('/login');
-    }
+
+    // Renderizza la vista dell'area personale
+    res.render('areapersonale', {
+        title: 'Area Personale',
+        loggedin: true,
+        user: req.session.user // Passa i dati dell'utente alla vista
+    });
+    
 });
-
-//rotta get per la pagina di registrazione
-//app.get('/signup', (req, res) => {
-    //res.sendFile(path.join(__dirname, 'public/static', 'signup.html'));
-    //manda al file static singup.html
-
-//});
 
 app.get('/admin/dashboard', (req, res) => {
     if (req.session.role === 'admin') {
