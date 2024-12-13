@@ -39,7 +39,7 @@ app.use(express.json())
 const db = new sqlite3.Database('bandmates.db');
 
 function isAdmin(req, res, next) {
-    if (req.user && req.user.userType === 'admin') {
+    if (req.session.role === 'admin') {
         next(); // L'utente è admin, prosegui
     } else {
         res.status(403).json({ error: "Accesso negato. Solo gli admin possono accedere." });
