@@ -27,19 +27,20 @@ app.use(session({
 const port = 3000;
 app.set('view engine', 'hbs')
 
-
 app.use(cors(corsOptions));
 // Middleware di gestione degli errori
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).render('error', { message: 'Si è verificato un errore interno del server' });
 });
+
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
 const db = new sqlite3.Database('bandmates.db');
+
 function isAdmin(req, res, next) {
-    if (req.user && req.user.role === 'admin') {
+    if (req.user && req.user.userType === 'admin') {
         next(); // L'utente è admin, prosegui
     } else {
         res.status(403).json({ error: "Accesso negato. Solo gli admin possono accedere." });
@@ -121,7 +122,7 @@ app.post('/signup', async (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    if (req.session.loggedin) {
+    if (req.session.loggedIn) {
         res.redirect('/home');
     } else {
         res.sendFile(path.join(__dirname, 'public', 'login.html'));
@@ -492,30 +493,25 @@ app.get('/search', async (req, res) => {
     }
 });
 
+// Rotta per la visualizzazione di tutte le band
 app.get('/bands', (req, res) => {
-    const query = `SELECT * FROM bands`;
-
-    db.all(query, (err, bands) => {
+    db.all('SELECT * FROM bands', (err, rows) => {
         if (err) {
-            res.status(500).json({ error: "Errore durante il recupero delle band." });
-            return;
+            console.error(err);
+            return res.status(500).json({ error: 'Errore nel recupero delle band' });
         }
-
-        res.status(200).json(bands);
+        res.json(rows);
     });
 });
 
-app.get('/bands/location/:location', (req, res) => {
-    const location = req.params.location;
-    const query = `SELECT * FROM bands WHERE location = ?`;
-
-    db.all(query, [location], (err, bands) => {
+//rotta per la visualizzazione di tutte le band con genere rock o Rock
+app.get('/bands/rock', (req, res) => {
+    db.all('SELECT * FROM bands WHERE genre = "rock" OR genre = "Rock"', (err, rows) => {
         if (err) {
-            res.status(500).json({ error: "Errore durante il recupero delle band." });
-            return;
+            console.error(err);
+            return res.status(500).json({ error: 'Errore nel recupero delle band' });
         }
-
-        res.status(200).json(bands);
+        res.json(rows);
     });
 });
 
@@ -546,5 +542,5 @@ module.exports = app;
 app.use(express.static('public'));
 // Avvio del server
 app.listen(port, () => {
-    console.log(`Server in ascolto sulla porta ${port}`);
+    console.log(`Server in ascolto sulla porta ${"http://localhost:" + port}`);
 });
