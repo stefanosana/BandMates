@@ -45,7 +45,6 @@ function isAdmin(req, res, next) {
         res.status(403).json({ error: "Accesso negato. Solo gli admin possono accedere." });
     }
 }
-app.use('/admin', isAdmin);
 
 app.post('/signup', async (req, res) => {
     const { userType, full_name, email, password, instrument, experience, description, location, looking_for, genre } = req.body;
@@ -227,7 +226,10 @@ app.get('/area-personale', (req, res) => {
 
 app.get('/admin/dashboard', (req, res) => {
     if (req.session.role === 'admin') {
-        res.render('admin/dashboard');
+        res.render('admin/dashboard', {
+            full_name: req.session.full_name,
+            role: req.session.role,
+        });
     } else {
         res.status(403).send('Accesso negato');
     }

@@ -112,14 +112,63 @@
         footer a:hover {
             text-decoration: none;
         }
+
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(to left, #00c6ff, #0072ff);
+            color: white;
+            padding: 1rem;
+            height: 100vh;
+            position: fixed;
+        }
+
+        .sidebar a {
+            color: #ffffff;
+            text-decoration: none;
+            display: block;
+            padding: 0.5rem 0;
+        }
+
+        .sidebar a:hover {
+            text-decoration: underline;
+        }
+
+        .content {
+            margin-left: 250px;
+            padding: 2rem;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <h1>Dashboard Admin</h1>
-    <nav>
-        <a href="/admin/users">Gestione Utenti</a> |
-        <a href="/admin/feedback">Feedback</a>
-        <a href="/logout">logout</a>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">BandMates</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <li>
+                        <a href="/area-personale">Area Personale</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </nav>
+
+    <div class="sidebar">
+        <h2>Admin Panel</h2>
+        <a href="/admin/users">Gestione Utenti</a>
+        <a href="/admin/feedback">Feedback</a>
+        <a href="/logout">Logout</a>
+    </div>
+    <div class="content">
+        <!-- Contenuto principale della pagina -->
+    </div>
 </body>
 </html>
