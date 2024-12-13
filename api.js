@@ -5,7 +5,6 @@ const cors = require('cors');
 const hbs = require("handlebars");
 const path = require('path');
 require('dotenv').config();
-const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const app = express();
@@ -131,7 +130,7 @@ app.get('/login', (req, res) => {
 
 // POST endpoint per il login
 app.post('/login', (req, res) => {
-    if (req.body === undefined) {
+    if (!req.body) {
         return res.status(400).render('error', { message: 'Undefined body' });
     }
 
@@ -143,11 +142,11 @@ app.post('/login', (req, res) => {
 
     // Recupera l'utente dal database
     db.get(
-        `SELECT userType, id, full_name, email, password 
+        `SELECT userType, id, full_name, email, password, role 
          FROM (
-             SELECT 'musician' AS userType, musician_id AS id, full_name, email, password FROM musicians 
+             SELECT 'musician' AS userType, musician_id AS id, full_name, email, password, role FROM musicians 
              UNION 
-             SELECT 'band' AS userType, band_id AS id, full_name, email, password FROM bands
+             SELECT 'band' AS userType, band_id AS id, full_name, email, password, role FROM bands
          )
          WHERE email = ?`,
         [email],
@@ -158,38 +157,38 @@ app.post('/login', (req, res) => {
             }
 
             if (!user) {
-                return res.status(401).render('error', { message: 'Email o password errati' });
+                return res.status(401).render('error', { message: 'Credenziali errate' });
             }
 
             try {
                 // Verifica la password
                 const isMatch = await bcrypt.compare(password, user.password);
                 if (!isMatch) {
-                    return res.status(401).render('error', { message: 'Password Errata' });
+                    return res.status(401).render('error', { message: 'Credenziali errate' });
                 }
-                // Login riuscito
 
+                // Login riuscito
                 req.session.loggedIn = true;
-                req.session.id = user.id;
+                req.session.userId = user.id;
                 req.session.full_name = user.full_name;
                 req.session.userType = user.userType;
+                req.session.role = user.role;
 
-                if (user.userType === 'admin')
-                {
-                    res.render('/admin/dashboard', {
+                if (user.role === 'admin') {
+                    res.render('admin/dashboard', {
                         full_name: user.full_name,
                         userType: user.userType,
-                        loggedIn: true,  
+                        role: user.role,
+                        loggedIn: true,
                     });
-                }
-                else{
-                    res.render('home', {
+                } else if (user.role === 'musician' || user.role === 'band') {
+                    res.render('/home', {
                         full_name: user.full_name,
                         userType: user.userType,
-                        loggedIn: true,  
+                        role: user.role,
+                        loggedIn: true,
                     });
                 }
-                
             } catch (error) {
                 console.error('Errore durante la verifica della password:', error);
                 res.status(500).render('error', { message: "Errore durante l'accesso" });
@@ -197,6 +196,7 @@ app.post('/login', (req, res) => {
         }
     );
 });
+
 
 app.get('/logout', (req, res) => {
     req.session.loggedIn = false;
@@ -210,12 +210,17 @@ app.get('/area-personale', (req, res) => {
         return res.redirect('/login');
     }
 
+    if (req.session.role === 'admin') {
+        return res.redirect('/admin/dashboard');
+    }
+
     // Renderizza la vista dell'area personale
     res.render('areapersonale', {
         title: 'Area Personale',
         loggedIn: true,
         full_name : req.session.full_name,
         userType : req.session.userType,
+        role : req.session.role
     });
     
 });
@@ -372,15 +377,17 @@ app.get('/admin/feedback', (req, res) => {
 
 app.get('/home', (req, res) => {
     if (req.session.loggedIn) {
-        if (req.session.userType === 'admin') {
+        if (req.session.role === 'admin') {
             res.render('admin/home', {
                 fullName: req.session.full_name,
                 userType: req.session.userType,
+                role: req.session.role,
             });
         } else {
             res.render('home', {
                 full_name: req.session.full_name,
                 userType: req.session.userType,
+                role: req.session.role,
                 loggedIn : true
             });
         }
@@ -535,7 +542,6 @@ app.delete('/admin/delete-user/:id', isAdmin, (req, res) => {
         res.json({ message: `Utente con ID ${id} eliminato.` });
     });
 });
-
 
 
 module.exports = app;
