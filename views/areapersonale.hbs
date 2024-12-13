@@ -1,14 +1,144 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>BandMates - Trova la tua Band o Musicista</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav .nav-link {
+            font-size: 1.1rem;
+        }
+
+        .navbar {
+            padding: 1rem 2rem;
+        }
+
+        .search-section {
+            padding: 3rem 0;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            color: white;
+        }
+
+        .search-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn-primary {
+            background-color: #ffc107;
+            border: none;
+            color: #333;
+            font-weight: bold;
+            padding: 0.5rem 2rem;
+        }
+
+        .btn-primary:hover {
+            background-color: #e0a800;
+        }
+
+        .btn-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+
+        .advanced-search {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .recommended-section {
+            padding: 3rem 0;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-img-top {
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        footer {
+            background-color: #343a40;
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        footer a {
+            color: #ffc107;
+        }
+
+        footer a:hover {
+            text-decoration: none;
+        }
+    </style>
 </head>
 
 <body>
+     <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">BandMates</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <span class="navbar-text me-3">Ciao, <strong>{{full_name}}</strong></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
     {{#if full_name}}
     <h1>{{full_name}}</h1>
     {{/if}}
@@ -16,6 +146,12 @@
     {{#if loggedIn}}
     <h1>sei loggato!</h1>
     {{/if}}
+
+     <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 BandMates. Tutti i diritti riservati.</p>
+        <p><a href="#">Privacy Policy</a> | <a href="#">Termini di servizio</a></p>
+    </footer>
 </body>
 
 </html>
