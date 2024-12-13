@@ -27,6 +27,7 @@ app.use(session({
 const port = 3000;
 app.set('view engine', 'hbs')
 
+
 app.use(cors(corsOptions));
 // Middleware di gestione degli errori
 app.use((err, req, res, next) => {
@@ -128,7 +129,7 @@ app.get('/login', (req, res) => {
 });
 
 // POST endpoint per il login
-app.post('/login', async (req, res) => {
+app.post('/login', (req, res) => {
     if (req.body === undefined) {
         return res.status(400).render('error', { message: 'Undefined body' });
     }
@@ -139,73 +140,81 @@ app.post('/login', async (req, res) => {
         return res.status(400).render('error', { message: 'Email e password sono obbligatorie' });
     }
 
-    try {
-        // Recupera l'utente dal database
-        const user = await new Promise((resolve, reject) => {
-            db.get(
-                `SELECT userType, id, full_name, email, password 
-                 FROM (
-                     SELECT 'musician' AS userType, musician_id AS id, full_name, email, password FROM musicians 
-                     UNION 
-                     SELECT 'band' AS userType, band_id AS id, full_name, email, password FROM bands
-                 )
-                 WHERE email = ?`,
-                [email],
-                (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row);
+    // Recupera l'utente dal database
+    db.get(
+        `SELECT userType, id, full_name, email, password 
+         FROM (
+             SELECT 'musician' AS userType, musician_id AS id, full_name, email, password FROM musicians 
+             UNION 
+             SELECT 'band' AS userType, band_id AS id, full_name, email, password FROM bands
+         )
+         WHERE email = ?`,
+        [email],
+        async (err, user) => {
+            if (err) {
+                console.error('Errore durante il login:', err);
+                return res.status(500).render('error', { message: "Errore durante l'accesso" });
+            }
+
+            if (!user) {
+                return res.status(401).render('error', { message: 'Email o password errati' });
+            }
+
+            try {
+                // Verifica la password
+                const isMatch = await bcrypt.compare(password, user.password);
+                if (!isMatch) {
+                    return res.status(401).render('error', { message: 'Password Errata' });
                 }
-            );
-        });
+                // Login riuscito
 
-        if (!user) {
-            return res.status(401).render('error', { message: 'Email o password errati' });
+                req.session.loggedIn = true;
+                req.session.id = user.id;
+                req.session.full_name = user.full_name;
+                req.session.userType = user.userType;
+
+                if (user.userType === 'admin')
+                {
+                    res.render('/admin/dashboard', {
+                        full_name: user.full_name,
+                        userType: user.userType,
+                        loggedIn: true,  
+                    });
+                }
+                else{
+                    res.render('home', {
+                        full_name: user.full_name,
+                        userType: user.userType,
+                        loggedIn: true,  
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Errore durante la verifica della password:', error);
+                res.status(500).render('error', { message: "Errore durante l'accesso" });
+            }
         }
-
-        // Verifica la password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).render('error', { message: 'Password Errata' });
-        }
-
-        // Imposta i dati di sessione
-        req.session.loggedin = true;
-        req.session.name = user.full_name;
-        req.session.role = user.userType;
-        req.session.userId = user.id;
-
-        // Determina la destinazione del reindirizzamento
-        let redirectUrl = '/home';
-        if (user.userType === 'admin') {
-            redirectUrl = '/admin/dashboard';
-        }
-
-        // Reindirizza alla destinazione appropriata dopo il login riuscito
-        return res.redirect(redirectUrl);
-
-    } catch (error) {
-        console.error('Errore durante il login:', error);
-        return res.status(500).render('error', { message: "Errore durante l'accesso" });
-    }
+    );
 });
 
 app.get('/logout', (req, res) => {
-    req.session.loggedin = false;
+    req.session.loggedIn = false;
     res.redirect('/login');
 });
 
 //rotta get per la pagina di area personale
 app.get('/area-personale', (req, res) => {
     // Verifica se l'utente è autenticato
-    if (!req.session.loggedin) {
+    if (!req.session.loggedIn) {
         return res.redirect('/login');
     }
 
     // Renderizza la vista dell'area personale
     res.render('areapersonale', {
         title: 'Area Personale',
-        loggedin: true,
-        user: req.session.user // Passa i dati dell'utente alla vista
+        loggedIn: true,
+        full_name : req.session.full_name,
+        userType : req.session.userType,
     });
     
 });
@@ -361,21 +370,19 @@ app.get('/admin/feedback', (req, res) => {
 });
 
 app.get('/home', (req, res) => {
-    if (req.session.loggedin) {
+    if (req.session.loggedIn) {
         if (req.session.userType === 'admin') {
             res.render('admin/home', {
-                fullName: req.session.fullName,
+                fullName: req.session.full_name,
                 userType: req.session.userType,
-                message: req.session.message
             });
         } else {
             res.render('home', {
-                fullName: req.session.name,
-                userType: req.session.role,
-                message: 'Welcome back, ' + req.session.name + '!'
+                full_name: req.session.full_name,
+                userType: req.session.userType,
+                loggedIn : true
             });
         }
-        //res.send('Welcome back, ' + req.session.name + '!' + '<br>' + '<a href="/logout">Logout</a>');
     } else {
         res.redirect('/login');
     }
