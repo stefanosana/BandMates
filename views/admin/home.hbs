@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin BandMates</title>
-
+    <title>Gestione Utenti</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -30,128 +29,80 @@
 
         .navbar {
             padding: 1rem 2rem;
+            padding-bottom: 20px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
         }
 
-        .search-section {
-            padding: 3rem 0;
-            background: linear-gradient(to right, #00c6ff, #0072ff);
-            color: white;
-        }
-
-        .search-container {
-            background-color: white;
+        .content {
+            margin-top: 100px;
+            /* Spazio tra la navbar e la tabella */
             padding: 2rem;
-            border-radius: 15px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 2rem;
+        }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
         }
 
-        .form-label {
-            font-weight: 600;
+        th,
+        td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
             color: #333;
         }
 
-        .btn-primary {
-            background-color: #ffc107;
-            border: none;
-            color: #333;
-            font-weight: bold;
-            padding: 0.5rem 2rem;
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
 
-        .btn-primary:hover {
-            background-color: #e0a800;
-        }
-
-        .btn-link {
+        a {
             color: #007bff;
             text-decoration: none;
         }
 
-        .btn-link:hover {
+        a:hover {
             text-decoration: underline;
-        }
-
-        .advanced-search {
-            display: none;
-            margin-top: 1rem;
-        }
-
-        .recommended-section {
-            padding: 3rem 0;
-        }
-
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card-img-top {
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
-            height: 200px;
-            object-fit: cover;
-        }
-
-        footer {
-            background-color: #343a40;
-            color: white;
-            padding: 1.5rem 0;
-            text-align: center;
-        }
-
-        footer a {
-            color: #ffc107;
-        }
-
-        footer a:hover {
-            text-decoration: none;
-        }
-
-        .sidebar {
-            width: 250px;
-            background: linear-gradient(to left, #00c6ff, #0072ff);
-            color: white;
-            padding: 1rem;
-            height: 100vh;
-            position: fixed;
-        }
-
-        .sidebar a {
-            color: #ffffff;
-            text-decoration: none;
-            display: block;
-            padding: 0.5rem 0;
-        }
-
-        .sidebar a:hover {
-            text-decoration: underline;
-        }
-
-        .content {
-            margin-left: 250px;
-            padding: 2rem;
-            width: 100%;
         }
     </style>
 </head>
+
 <body>
+    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
-            <a class="navbar-brand" href="index.html">BandMates</a>
+            <a class="navbar-brand" href="/home">BandMates Admin</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav align-items-center">
                     <li>
-                        <a href="/area-personale">Area Personale</a>
+                        <a class="nav-link" href="/admin/users">Gestione Utenti |</a>
+                    </li>
+                    <li>
+                        <a class="nav-link" href="/admin/feedback">Feedback |</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="logout">Logout</a>
@@ -161,14 +112,31 @@
         </div>
     </nav>
 
-    <div class="sidebar">
-        <h2>Admin Panel</h2>
-        <a href="/admin/users">Gestione Utenti</a>
-        <a href="/admin/feedback">Feedback</a>
-        <a href="/logout">Logout</a>
-    </div>
-    <div class="content">
-        <!-- Contenuto principale della pagina -->
-    </div>
-</body>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="index.html">BandMates</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                    <ul class="navbar-nav align-items-center">
+                        <h2>Admin Panel</h2>
+                        <li>
+                            <a href="/admin/users">Gestione Utenti | </a>
+                        </li>
+                        <li>
+                            <a href="/admin/feedback">Feedback | </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="logout">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+    </body>
+
 </html>

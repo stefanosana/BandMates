@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="it">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BandMates - Trova la tua Band o Musicista</title>
-
-    <!-- Bootstrap CSS -->
+    <title>Gestione Utenti</title>
+     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Google Fonts -->
@@ -30,55 +28,17 @@
 
         .navbar {
             padding: 1rem 2rem;
+            padding-bottom: 20px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
         }
 
-        .search-container {
-            background-color: white;
+        .content {
+            margin-top: 100px; /* Spazio tra la navbar e la tabella */
             padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .btn-primary {
-            background-color: #ffc107;
-            border: none;
-            color: #333;
-            font-weight: bold;
-            padding: 0.5rem 2rem;
-        }
-
-        .btn-primary:hover {
-            background-color: #e0a800;
-        }
-
-        .btn-link {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .btn-link:hover {
-            text-decoration: underline;
-        }
-
-
-        footer {
-            background-color: #343a40;
-            color: white;
-            padding: 1.5rem 0;
-            text-align: center;
-        }
-
-        footer a {
-            color: #ffc107;
-        }
-
-        footer a:hover {
-            text-decoration: none;
+            width: 100%;
         }
 
         h1 {
@@ -120,25 +80,23 @@
         a:hover {
             text-decoration: underline;
         }
+        
     </style>
 </head>
-
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
-            <a class="navbar-brand" href="index.html">BandMates</a>
+            <a class="navbar-brand" href="/home">BandMates Admin</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav align-items-center">
-                    <li class="nav-item">
-                        <span class="navbar-text me-3">Ciao, <strong>{{full_name}}</strong></span>
-                    </li>
                     <li>
-                        <a href="/area-personale">Area Personale</a>
+                        <a class="nav-link" href="/admin/feedback">Feedback |</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="logout">Logout</a>
@@ -148,30 +106,31 @@
         </div>
     </nav>
 
-    <h1>Gestione Utenti</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>Tipo Utente</th>
-                <th>Azioni</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{#each users}}
-            <tr>
-                <td>{{this.full_name}}</td>
-                <td>{{this.email}}</td>
-                <td>{{this.userType}}</td>
-                <td>
-                    <a href="/admin/users/edit/{{this.id}}">Modifica</a> |
-                    <a href="/admin/users/delete/{{this.id}}" onclick="return confirm('Sei sicuro?')">Elimina</a>
-                </td>
-            </tr>
-            {{/each}}
-        </tbody>
-    </table>
+    <div class="content">
+        <h2>Gestione Utenti</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Tipo Utente</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each users}}
+                <tr>
+                    <td>{{this.full_name}}</td>
+                    <td>{{this.email}}</td>
+                    <td>{{this.userType}}</td>
+                    <td>
+                        <a href="/admin/users/edit/{{this.id}}">Modifica</a> |
+                        <a href="/admin/users/delete/{{this.id}}" onclick="return confirm('Sei sicuro?')">Elimina</a>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
 </body>
-
 </html>
