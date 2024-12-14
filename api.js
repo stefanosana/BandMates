@@ -180,8 +180,8 @@ app.post('/login', (req, res) => {
                         role: user.role,
                         loggedIn: true,
                     });
-                } else if (user.role === 'musician' || user.role === 'band') {
-                    res.render('/home', {
+                } else if (user.userType === 'musician' || user.userType === 'band') {
+                    res.render('home', {
                         full_name: user.full_name,
                         userType: user.userType,
                         role: user.role,
