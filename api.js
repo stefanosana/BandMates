@@ -9,6 +9,9 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const app = express();
 app.use(session({ secret: 'session' }));
+const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
 const corsOptions = {
     origin: "*", // Consenti tutte le origini (solo per scopi di test)
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -46,6 +49,130 @@ function isAdmin(req, res, next) {
     }
 }
 
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'BandMates API',
+            version: '1.0.0',
+            description: 'API per la piattaforma BandMates, un social per musicisti e band',
+        },
+        servers: [
+            {
+                url: 'http://localhost:3000', // Cambia con l'URL del tuo server
+            },
+        ],
+    },
+    apis: ['api.js'], // Specifica i file che contengono la documentazione delle API
+};
+
+const swaggerDocs = swaggerJSDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+/**
+ * @swagger
+ * /signup:
+ *   post:
+ *     summary: Registra un nuovo utente (musicista o band)
+ *     description: Permette la registrazione di un musicista o di una band sulla piattaforma BandMates.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userType
+ *               - full_name
+ *               - email
+ *               - password
+ *               - location
+ *             properties:
+ *               userType:
+ *                 type: string
+ *                 enum: [musician, band]
+ *                 description: Tipo di utente (musicista o band).
+ *                 example: musician
+ *               full_name:
+ *                 type: string
+ *                 description: Nome completo dell'utente.
+ *                 example: John Doe
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Indirizzo email unico.
+ *                 example: johndoe@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: Password di almeno 6 caratteri.
+ *                 example: password123
+ *               location:
+ *                 type: string
+ *                 description: Località dell'utente.
+ *                 example: New York
+ *               instrument:
+ *                 type: string
+ *                 description: Strumento musicale suonato (solo per musicisti).
+ *                 example: Guitar
+ *               experience:
+ *                 type: string
+ *                 description: Livello di esperienza musicale (solo per musicisti).
+ *                 example: Intermediate
+ *               description:
+ *                 type: string
+ *                 description: Breve descrizione dell'utente.
+ *                 example: Chitarrista con 5 anni di esperienza, amante del rock.
+ *               looking_for:
+ *                 type: string
+ *                 description: Tipo di musicisti ricercati (solo per band).
+ *                 example: Vocalist
+ *               genre:
+ *                 type: string
+ *                 description: Genere musicale della band (solo per band).
+ *                 example: Rock
+ *     responses:
+ *       200:
+ *         description: Registrazione avvenuta con successo.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Messaggio di conferma.
+ *                   example: Registrazione avvenuta con successo come musicista
+ *                 id:
+ *                   type: integer
+ *                   description: ID dell'utente registrato.
+ *                   example: 1
+ *       400:
+ *         description: Errore di input nei dati forniti.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Dettagli dell'errore.
+ *                   example: Email già registrata
+ *       500:
+ *         description: Errore interno del server.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Dettagli dell'errore.
+ *                   example: Errore durante la registrazione del musicista
+ */
 app.post('/signup', async (req, res) => {
     const { userType, full_name, email, password, instrument, experience, description, location, looking_for, genre } = req.body;
 
@@ -119,6 +246,30 @@ app.post('/signup', async (req, res) => {
     }
 });
 
+
+/**
+ * @swagger
+ * /login:
+ *   get:
+ *     summary: Mostra la pagina di login o reindirizza l'utente autenticato alla home.
+ *     description: Se l'utente è già autenticato, viene reindirizzato alla home. Altrimenti, viene visualizzata la pagina di login.
+ *     responses:
+ *       200:
+ *         description: Pagina di login mostrata con successo.
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *               description: Contenuto HTML della pagina di login.
+ *       302:
+ *         description: Reindirizzamento alla pagina home per utenti autenticati.
+ *         headers:
+ *           Location:
+ *             description: URL della home page.
+ *             schema:
+ *               type: string
+ *               example: /home
+ */
 app.get('/login', (req, res) => {
     if (req.session.loggedIn) {
         res.redirect('/home');
@@ -127,7 +278,74 @@ app.get('/login', (req, res) => {
     }
 });
 
-// POST endpoint per il login
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Effettua il login di un utente (musicista o band).
+ *     description: Permette a un utente di effettuare il login tramite email e password. Se il login ha successo, l'utente viene rediretto alla home o dashboard. In caso di errore, viene restituito un messaggio di errore.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: L'email dell'utente.
+ *                 example: "user@example.com"
+ *               password:
+ *                 type: string
+ *                 description: La password dell'utente.
+ *                 example: "password123"
+ *     responses:
+ *       200:
+ *         description: Login riuscito. L'utente è reindirizzato alla home o dashboard in base al ruolo.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Login avvenuto con successo"
+ *                 redirectUrl:
+ *                   type: string
+ *                   example: "/home"  # URL della pagina di destinazione
+ *       400:
+ *         description: Corpo della richiesta o campi obbligatori mancanti.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Email e password sono obbligatorie"
+ *       401:
+ *         description: Credenziali errate (email o password non corrispondono).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Credenziali errate"
+ *       500:
+ *         description: Errore interno del server durante il login.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Errore durante l'accesso"
+ *     security:
+ *       - sessionAuth: []  # L'autenticazione è gestita tramite la sessione dell'utente.
+ */
 app.post('/login', (req, res) => {
     if (!req.body) {
         return res.status(400).render('error', { message: 'Undefined body' });
@@ -196,13 +414,73 @@ app.post('/login', (req, res) => {
     );
 });
 
-
+/**
+ * @swagger
+ * /logout:
+ *   get:
+ *     summary: Effettua il logout dell'utente.
+ *     description: Questa API permette all'utente di disconnettersi, terminando la sessione attiva, e reindirizzandolo alla pagina di login.
+ *     responses:
+ *       200:
+ *         description: Logout avvenuto con successo, l'utente è stato reindirizzato alla pagina di login.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Logout effettuato con successo"
+ *                 redirectUrl:
+ *                   type: string
+ *                   example: "/login"  # URL della pagina di login
+ *       500:
+ *         description: Errore interno del server durante il logout.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Errore durante il logout"
+ */
 app.get('/logout', (req, res) => {
     req.session.loggedIn = false;
     res.redirect('/login');
 });
 
-//rotta get per la pagina di area personale
+/**
+ * @swagger
+ * /area-personale:
+ *   get:
+ *     summary: Visualizza l'area personale dell'utente.
+ *     description: Se l'utente è autenticato, viene mostrata l'area personale. Se l'utente è un admin, viene reindirizzato alla dashboard dell'admin. Se l'utente non è autenticato, viene reindirizzato alla pagina di login.
+ *     responses:
+ *       200:
+ *         description: Area personale visualizzata con successo.
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *               description: Contenuto HTML dell'area personale.
+ *       302:
+ *         description: Reindirizzamento alla pagina di login per utenti non autenticati.
+ *         headers:
+ *           Location:
+ *             description: URL della pagina di login.
+ *             schema:
+ *               type: string
+ *               example: /login
+ *       302:
+ *         description: Reindirizzamento alla dashboard dell'admin per utenti con ruolo "admin".
+ *         headers:
+ *           Location:
+ *             description: URL della dashboard dell'admin.
+ *             schema:
+ *               type: string
+ *               example: /admin/dashboard
+ */
 app.get('/area-personale', (req, res) => {
     // Verifica se l'utente è autenticato
     if (!req.session.loggedIn) {
@@ -217,13 +495,35 @@ app.get('/area-personale', (req, res) => {
     res.render('areapersonale', {
         title: 'Area Personale',
         loggedIn: true,
-        full_name : req.session.full_name,
-        userType : req.session.userType,
-        role : req.session.role
+        full_name: req.session.full_name,
+        userType: req.session.userType,
+        role: req.session.role
     });
-    
+
 });
 
+/**
+ * @swagger
+ * /admin/dashboard:
+ *   get:
+ *     summary: Visualizza la dashboard dell'amministratore.
+ *     description: Se l'utente ha il ruolo di "admin", viene visualizzata la dashboard dell'amministratore. Altrimenti, viene restituito un errore di accesso negato.
+ *     responses:
+ *       200:
+ *         description: Dashboard dell'amministratore visualizzata con successo.
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *               description: Contenuto HTML della dashboard dell'amministratore.
+ *       403:
+ *         description: Accesso negato per utenti non amministratori.
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Accesso negato'
+ */
 app.get('/admin/dashboard', (req, res) => {
     if (req.session.role === 'admin') {
         res.render('admin/dashboard', {
@@ -235,6 +535,35 @@ app.get('/admin/dashboard', (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /admin/users:
+ *   get:
+ *     summary: Visualizza la lista degli utenti per l'amministratore.
+ *     description: Se l'utente ha il ruolo di "admin", vengono recuperati e visualizzati tutti gli utenti (musicisti e band) dal database. Se l'utente non ha il ruolo di "admin", viene restituito un errore di accesso negato.
+ *     responses:
+ *       200:
+ *         description: Lista degli utenti visualizzata con successo.
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *               description: Contenuto HTML della lista degli utenti.
+ *       403:
+ *         description: Accesso negato per utenti non amministratori.
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Accesso negato'
+ *       500:
+ *         description: Errore durante il recupero degli utenti dal database.
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Errore nel recupero utenti'
+ */
 app.get('/admin/users', (req, res) => {
     if (req.session.role === 'admin') {
         // Recupera utenti dal database
@@ -248,6 +577,7 @@ app.get('/admin/users', (req, res) => {
         res.status(403).send('Accesso negato');
     }
 });
+
 
 app.get('/admin/users/add', (req, res) => {
     if (req.session.role === 'admin') {
@@ -377,6 +707,36 @@ app.get('/admin/feedback', (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /home:
+ *   get:
+ *     summary: Visualizza la homepage per l'utente autenticato.
+ *     description: Se l'utente è autenticato, viene reindirizzato alla homepage in base al suo ruolo. Gli amministratori vengono reindirizzati alla home amministratore, mentre gli altri utenti (musicisti o band) vedono la loro homepage personalizzata. Se l'utente non è autenticato, viene reindirizzato alla pagina di login.
+ *     responses:
+ *       200:
+ *         description: Pagina della home visualizzata con successo.
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *               description: Contenuto HTML della homepage per l'utente.
+ *       302:
+ *         description: Reindirizzamento alla pagina di login per gli utenti non autenticati.
+ *         headers:
+ *           Location:
+ *             description: URL della pagina di login.
+ *             schema:
+ *               type: string
+ *               example: /login
+ *       403:
+ *         description: Accesso negato se l'utente non ha il ruolo di amministratore.
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *               description: Messaggio di errore che indica accesso negato.
+ */
 app.get('/home', (req, res) => {
     if (req.session.loggedIn) {
         if (req.session.role === 'admin') {
@@ -390,7 +750,7 @@ app.get('/home', (req, res) => {
                 full_name: req.session.full_name,
                 userType: req.session.userType,
                 role: req.session.role,
-                loggedIn : true
+                loggedIn: true
             });
         }
     } else {
