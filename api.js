@@ -176,7 +176,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.post('/signup', async (req, res) => {
     const { userType, full_name, email, password, instrument, experience, description, location, looking_for, genre } = req.body;
 
-    // Verifica che tutti i campi comuni siano presenti
+    // Verifica dei campi obbligatori comuni
     if (!userType || !full_name || !email || !password || !location) {
         return res.status(400).json({ error: "I campi userType, full_name, email, password e location sono obbligatori" });
     }
@@ -191,7 +191,7 @@ app.post('/signup', async (req, res) => {
         return res.status(400).json({ error: "Il campo userType deve essere 'musician' o 'band'" });
     }
 
-    // Verifica che i campi specifici siano presenti in base al tipo di utente
+    // Verifica dei campi specifici in base al tipo di utente
     if (userType === "musician" && !instrument) {
         return res.status(400).json({ error: "Il campo instrument è obbligatorio per i musicisti" });
     }
@@ -203,8 +203,8 @@ app.post('/signup', async (req, res) => {
         // Hash della password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Verifica se l'email è già presente
-        db.get(`SELECT email FROM musicians WHERE email = ? UNION SELECT email FROM bands WHERE email = ?`, [email, email], (err, row) => {
+        // Verifica se l'email è già presente nella tabella USERS
+        db.get(`SELECT email FROM USERS WHERE email = ?`, [email], (err, row) => {
             if (err) {
                 console.error("Errore durante il controllo dell'email:", err.message);
                 return res.status(500).json({ error: "Errore durante il controllo dell'email" });
@@ -213,39 +213,52 @@ app.post('/signup', async (req, res) => {
                 return res.status(400).json({ error: "Email già registrata" });
             }
 
-            // Inserimento nel database basato su userType
-            if (userType === "musician") {
-                db.run(
-                    `INSERT INTO musicians (userType, full_name, email, password, instrument, experience, description, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [userType, full_name, email, hashedPassword, instrument, experience, description, location],
-                    function (err) {
-                        if (err) {
-                            console.error("Errore durante la registrazione del musicista:", err.message);
-                            return res.status(500).json({ error: "Errore durante la registrazione del musicista" });
-                        }
-                        res.json({ message: 'Registrazione avvenuta con successo come musicista', id: this.lastID });
+            // Inserimento dell'utente nella tabella USERS
+            db.run(
+                `INSERT INTO users (userType, full_name, email, password, location) VALUES (?, ?, ?, ?, ?)`,
+                [userType, full_name, email, hashedPassword, location],
+                function (err) {
+                    if (err) {
+                        console.error("Errore durante la registrazione dell'utente:", err.message);
+                        return res.status(500).json({ error: "Errore durante la registrazione dell'utente" });
                     }
-                );
-            } else if (userType === "band") {
-                db.run(
-                    `INSERT INTO bands (userType, full_name, email, password, description, looking_for, location, genre) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [userType, full_name, email, hashedPassword, description, looking_for, location, genre],
-                    function (err) {
-                        if (err) {
-                            console.error("Errore durante la registrazione della band:", err.message);  // Aggiunto messaggio di errore completo
-                            return res.status(500).json({ error: "Errore durante la registrazione della band" });
-                        }
-                        res.json({ message: 'Registrazione avvenuta con successo come band', id: this.lastID });
+
+                    const userId = this.lastID; // ID dell'utente appena creato
+
+                    // Inserimento nei dati specifici (MUSICIANS o BANDS) basato su userType
+                    if (userType === "musician") {
+                        db.run(
+                            `INSERT INTO MUSICIANS (user_id, instrument, experience, description) VALUES (?, ?, ?, ?)`,
+                            [userId, instrument, experience, description],
+                            function (err) {
+                                if (err) {
+                                    console.error("Errore durante la registrazione del musicista:", err.message);
+                                    return res.status(500).json({ error: "Errore durante la registrazione del musicista" });
+                                }
+                                res.json({ message: 'Registrazione avvenuta con successo come musicista', id: userId });
+                            }
+                        );
+                    } else if (userType === "band") {
+                        db.run(
+                            `INSERT INTO BANDS (user_id, description, looking_for, genre) VALUES (?, ?, ?, ?)`,
+                            [userId, description, looking_for, genre],
+                            function (err) {
+                                if (err) {
+                                    console.error("Errore durante la registrazione della band:", err.message);
+                                    return res.status(500).json({ error: "Errore durante la registrazione della band" });
+                                }
+                                res.json({ message: 'Registrazione avvenuta con successo come band', id: userId });
+                            }
+                        );
                     }
-                );
-            }
+                }
+            );
         });
     } catch (error) {
         console.error("Errore interno del server:", error.message);
         res.status(500).json({ error: "Errore interno del server" });
     }
 });
-
 
 /**
  * @swagger
@@ -357,19 +370,13 @@ app.post('/login', (req, res) => {
         return res.status(400).render('error', { message: 'Email e password sono obbligatorie' });
     }
 
-    // Recupera l'utente dal database
+    // Recupera l'utente dal database USERS
     db.get(
-        `SELECT userType, id, full_name, email, password, role 
-         FROM (
-             SELECT 'musician' AS userType, musician_id AS id, full_name, email, password, role FROM musicians 
-             UNION 
-             SELECT 'band' AS userType, band_id AS id, full_name, email, password, role FROM bands
-         )
-         WHERE email = ?`,
+        `SELECT * FROM USERS WHERE email = ?`,
         [email],
         async (err, user) => {
             if (err) {
-                console.error('Errore durante il login:', err);
+                console.error('Errore durante il login:', err.message);
                 return res.status(500).render('error', { message: "Errore durante l'accesso" });
             }
 
@@ -386,28 +393,44 @@ app.post('/login', (req, res) => {
 
                 // Login riuscito
                 req.session.loggedIn = true;
-                req.session.userId = user.id;
+                req.session.userId = user.user_id;
                 req.session.full_name = user.full_name;
                 req.session.userType = user.userType;
                 req.session.role = user.role;
 
                 if (user.role === 'admin') {
-                    res.render('admin/dashboard', {
+                    // Renderizza il dashboard dell'admin
+                    return res.render('admin/dashboard', {
                         full_name: user.full_name,
                         userType: user.userType,
                         role: user.role,
                         loggedIn: true,
                     });
-                } else if (user.userType === 'musician' || user.userType === 'band') {
-                    res.render('home', {
-                        full_name: user.full_name,
-                        userType: user.userType,
-                        role: user.role,
-                        loggedIn: true,
-                    });
-                }
+                } 
+
+                // Recupera dati aggiuntivi in base al tipo di utente
+                const table = user.userType === 'musician' ? 'MUSICIANS' : 'BANDS';
+
+                db.get(
+                    `SELECT * FROM ${table} WHERE user_id = ?`,
+                    [user.user_id],
+                    (err, userDetails) => {
+                        if (err) {
+                            console.error(`Errore durante il recupero dei dettagli da ${table}:`, err.message);
+                            return res.status(500).render('error', { message: "Errore durante l'accesso" });
+                        }
+
+                        res.render('home', {
+                            full_name: user.full_name,
+                            userType: user.userType,
+                            role: user.role,
+                            loggedIn: true,
+                            additionalDetails: userDetails,
+                        });
+                    }
+                );
             } catch (error) {
-                console.error('Errore durante la verifica della password:', error);
+                console.error('Errore durante la verifica della password:', error.message);
                 res.status(500).render('error', { message: "Errore durante l'accesso" });
             }
         }

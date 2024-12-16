@@ -31,12 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || 'Errore durante il login');
+                // Otteniamo l'errore come testo per mostrarlo meglio all'utente
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Errore durante il login');
             }
 
-            // Se la risposta è ok ma non c'è stato un reindirizzamento,
-            // possiamo assumere che il login sia avvenuto con successo
+            // Se la risposta è ok ma non c'è stato un reindirizzamento
             window.location.href = '/home';
         } catch (error) {
             console.error('Errore durante il login:', error.message);

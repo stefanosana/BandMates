@@ -9,7 +9,7 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
     const instrument = userType === 'musician' ? document.getElementById('instrument').value : '';
     const skillLevel = userType === 'musician' ? document.getElementById('skillLevel').value : ''; 
     const description = document.getElementById('description').value;
-    const lookingFor = userType === 'band' ? document.getElementById('lookingFor').value : '';
+    const lookingFor = userType === 'band' ? document.getElementById('lookingFor').value : ''; // Corretto
     const location = document.getElementById('location').value;
     const genre = userType === 'band' ? document.getElementById('genre').value : '';
 
@@ -21,8 +21,9 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
         password,
         instrument,
         skillLevel,
+        experience: skillLevel, // Mappato correttamente
         description,
-        lookingFor,
+        looking_for: lookingFor, // Mappato correttamente
         location,
         genre
     };
@@ -49,4 +50,3 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
         alert('Errore durante la registrazione. Verifica la connessione al server.');
     }
 });
-
