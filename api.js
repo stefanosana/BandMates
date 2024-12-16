@@ -20,9 +20,9 @@ const corsOptions = {
 app.use(session({
     secret: 'session',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: { secure: process.env.NODE_ENV === "production" }
-}));
+  }));
 
 //const mock = require('./DBMock.js');
 //const db = new mock();
