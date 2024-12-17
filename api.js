@@ -28,6 +28,7 @@ app.use(session({
 //const db = new mock();
 const port = 3000;
 app.set('view engine', 'hbs')
+hbs.registerHelper('eq', (a, b) => a === b);
 
 app.use(cors(corsOptions));
 // Middleware di gestione degli errori
@@ -70,7 +71,6 @@ const swaggerDocs = swaggerJSDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 /**
  * @swagger
@@ -590,7 +590,7 @@ app.get('/admin/dashboard', (req, res) => {
 app.get('/admin/users', (req, res) => {
     if (req.session.role === 'admin') {
         // Recupera utenti dal database
-        db.all('SELECT * FROM musicians UNION SELECT * FROM bands', [], (err, rows) => {
+        db.all('SELECT * FROM USERS', [], (err, rows) => {
             if (err) {
                 return res.status(500).send('Errore nel recupero utenti');
             }
@@ -598,52 +598,6 @@ app.get('/admin/users', (req, res) => {
         });
     } else {
         res.status(403).send('Accesso negato');
-    }
-});
-
-
-app.get('/admin/users/add', (req, res) => {
-    if (req.session.role === 'admin') {
-        res.render('admin/addUser');
-    } else {
-        res.status(403).send('Accesso negato');
-    }
-});
-
-app.post('/admin/users/add', async (req, res) => {
-    const { userType, fullName, email, password } = req.body;
-
-    if (!userType || !fullName || !email || !password) {
-        return res.status(400).send('Tutti i campi sono obbligatori.');
-    }
-
-    try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        if (userType === 'musician') {
-            db.run(
-                `INSERT INTO musicians (full_name, email, password) VALUES (?, ?, ?)`,
-                [fullName, email, hashedPassword],
-                (err) => {
-                    if (err) return res.status(500).send('Errore nel salvataggio');
-                    res.redirect('/admin/users');
-                }
-            );
-        } else if (userType === 'band') {
-            db.run(
-                `INSERT INTO bands (full_name, email, password) VALUES (?, ?, ?)`,
-                [fullName, email, hashedPassword],
-                (err) => {
-                    if (err) return res.status(500).send('Errore nel salvataggio');
-                    res.redirect('/admin/users');
-                }
-            );
-        } else {
-            res.status(400).send('Tipo utente non valido.');
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Errore nel salvataggio.');
     }
 });
 
@@ -684,36 +638,43 @@ app.post('/admin/users/edit/:id', (req, res) => {
     });
 });
 
-app.get('/admin/users/delete/:id', (req, res) => {
-    if (req.session.role === 'admin') {
-        const { id } = req.params;
+app.get('/admin/users/edit/:id', (req, res) => {
+    const userId = req.params.id;
 
-        db.run(
-            `DELETE FROM musicians WHERE musician_id = ?`,
-            [id],
-            function (err) {
-                if (!this.changes) {
-                    // Se non trova in musicians, tenta di eliminare in bands
-                    db.run(
-                        `DELETE FROM bands WHERE band_id = ?`,
-                        [id],
-                        function (err) {
-                            if (!this.changes) {
-                                return res.status(404).send('Utente non trovato');
-                            }
-                            res.redirect('/admin/users');
-                        }
-                    );
-                } else if (err) {
-                    return res.status(500).send('Errore nella cancellazione');
-                } else {
-                    res.redirect('/admin/users');
-                }
-            }
-        );
-    } else {
-        res.status(403).send('Accesso negato');
-    }
+    db.get('SELECT * FROM users WHERE user_id = ?', [userId], (err, user) => {
+        if (err) {
+            console.error('Errore nel recupero dell\'utente:', err);
+            return res.status(500).render('error', { message: 'Errore nel recupero dell\'utente' });
+        }
+
+        if (!user) {
+            return res.status(404).render('error', { message: 'Utente non trovato' });
+        }
+
+        // Renderizza la pagina di modifica con i dati dell'utente
+        res.render('admin/editUser', { user });
+    });
+});
+
+app.post('/admin/users/edit/:id', (req, res) => {
+    const userId = req.params.id;
+    const { full_name, email, userType, location, description } = req.body;
+
+    const updateQuery = `
+        UPDATE users 
+        SET full_name = ?, email = ?, userType = ?, location = ?, description = ? 
+        WHERE user_id = ?
+    `;
+
+    db.run(updateQuery, [full_name, email, userType, location, description, userId], function (err) {
+        if (err) {
+            console.error('Errore nell\'aggiornamento dell\'utente:', err);
+            return res.status(500).render('error', { message: 'Errore nell\'aggiornamento dell\'utente' });
+        }
+
+        // Reindirizza alla pagina di gestione utenti con un messaggio di successo
+        res.redirect('/admin/users?message=Utente aggiornato con successo');
+    });
 });
 
 app.get('/admin/feedback', (req, res) => {
@@ -781,127 +742,32 @@ app.get('/home', (req, res) => {
     }
 });
 
-app.get('/search', async (req, res) => {
-    try {
-        const query = req.query.q || '';
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = (page - 1) * limit;
-
-        const filters = {
-            type: req.query.type,
-            location: req.query.location,
-            genre: req.query.genre,
-            instrument: req.query.instrument,
-            minExperience: req.query.minExperience,
-            maxExperience: req.query.maxExperience
-        };
-
-        let sqlQuery = `
-        SELECT 
-          CASE 
-            WHEN m.musician_id IS NOT NULL THEN 'musician'
-            ELSE 'band'
-          END AS type,
-          COALESCE(m.musician_id, b.band_id) AS id,
-          COALESCE(m.full_name, b.full_name) AS full_name,
-          COALESCE(m.email, b.email) AS email,
-          COALESCE(m.location, b.location) AS location,
-          m.instrument,
-          m.experience,
-          b.genre
-        FROM 
-          (SELECT * FROM musicians UNION ALL SELECT * FROM bands) AS combined
-        LEFT JOIN musicians m ON combined.musician_id = m.musician_id
-        LEFT JOIN bands b ON combined.band_id = b.band_id
-        WHERE 1=1
-      `;
-
-        const params = [];
-
-        // Text search
-        if (query) {
-            sqlQuery += ` AND (m.full_name LIKE ? OR b.full_name LIKE ? OR m.instrument LIKE ? OR b.genre LIKE ?)`;
-            params.push(`%${query}%`, `%${query}%`, `%${query}%`, `%${query}%`);
-        }
-
-        // Apply filters
-        if (filters.type) {
-            sqlQuery += ` AND (CASE WHEN m.musician_id IS NOT NULL THEN 'musician' ELSE 'band' END) = ?`;
-            params.push(filters.type);
-        }
-        if (filters.location) {
-            sqlQuery += ` AND COALESCE(m.location, b.location) LIKE ?`;
-            params.push(`%${filters.location}%`);
-        }
-        if (filters.genre) {
-            sqlQuery += ` AND b.genre LIKE ?`;
-            params.push(`%${filters.genre}%`);
-        }
-        if (filters.instrument) {
-            sqlQuery += ` AND m.instrument LIKE ?`;
-            params.push(`%${filters.instrument}%`);
-        }
-        if (filters.minExperience) {
-            sqlQuery += ` AND m.experience >= ?`;
-            params.push(parseInt(filters.minExperience));
-        }
-        if (filters.maxExperience) {
-            sqlQuery += ` AND m.experience <= ?`;
-            params.push(parseInt(filters.maxExperience));
-        }
-
-        // Count total results
-        const countQuery = `SELECT COUNT(*) as total FROM (${sqlQuery})`;
-        const totalResults = await new Promise((resolve, reject) => {
-            db.get(countQuery, params, (err, row) => {
-                if (err) reject(err);
-                else resolve(row.total);
-            });
-        });
-
-        // Add pagination
-        sqlQuery += ` LIMIT ? OFFSET ?`;
-        params.push(limit, offset);
-
-        // Execute the search
-        const results = await new Promise((resolve, reject) => {
-            db.all(sqlQuery, params, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
-        });
-
-        res.json({
-            results,
-            currentPage: page,
-            totalPages: Math.ceil(totalResults / limit),
-            totalResults
-        });
-
-    } catch (error) {
-        console.error('Error in search endpoint:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-// Rotta per la visualizzazione di tutte le band
 app.get('/bands', (req, res) => {
-    db.all('SELECT * FROM bands', (err, rows) => {
+    const sql = `
+        SELECT U.full_name, U.location, B.genre
+        FROM BANDS B
+        JOIN USERS U ON B.user_id = U.user_id
+    `;
+    db.all(sql, [], (err, rows) => {
         if (err) {
-            console.error(err);
+            console.error('Errore nel recupero delle band:', err.message);
             return res.status(500).json({ error: 'Errore nel recupero delle band' });
         }
         res.json(rows);
     });
 });
 
-//rotta per la visualizzazione di tutte le band con genere rock o Rock
 app.get('/bands/rock', (req, res) => {
-    db.all('SELECT * FROM bands WHERE genre = "rock" OR genre = "Rock"', (err, rows) => {
+    const sql = `
+        SELECT U.full_name, U.location, B.genre
+        FROM BANDS B
+        JOIN USERS U ON B.user_id = U.user_id
+        WHERE B.genre = 'rock' OR B.genre = 'Rock'
+    `;
+    db.all(sql, [], (err, rows) => {
         if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Errore nel recupero delle band' });
+            console.error('Errore nel recupero delle band rock:', err.message);
+            return res.status(500).json({ error: 'Errore nel recupero delle band rock' });
         }
         res.json(rows);
     });
@@ -928,10 +794,9 @@ app.delete('/admin/delete-user/:id', isAdmin, (req, res) => {
     });
 });
 
-
 module.exports = app;
 app.use(express.static('public'));
 // Avvio del server
 app.listen(port, () => {
-    console.log(`Server in ascolto sulla porta ${"http://localhost:" + port}`);
+    console.log(`Server in ascolto sulla porta ${port}: ${"http://localhost:" + port}`);
 });
