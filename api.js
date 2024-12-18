@@ -804,259 +804,69 @@ app.get('/chat', (req, res) => {
     });
 });
 
-// Endpoint per la visualizzazione dei messaggi
-app.get('/messages', async (req, res) => {
-    // Verifica se l'utente è loggato
-    if (!req.session.loggedin) {
-        return res.redirect('/login');
+app.get('/users/list', (req, res) => {
+    // Verifica che l'utente sia loggato
+    if (!req.session.userId) {
+        return res.status(401).send('Non autorizzato');
     }
-
-    const userId = req.session.user.id;
-    const userType = req.session.user.userType;
-
-    try {
-        // Recupera tutte le conversazioni dell'utente
-        const conversations = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT DISTINCT 
-                    cr.chat_room_id,
-                    CASE 
-                        WHEN cr.sender_id = ? THEN cr.receiver_id
-                        ELSE cr.sender_id
-                    END as other_user_id,
-                    u.full_name as other_user_name,
-                    u.userType as other_user_type,
-                    (
-                        SELECT content 
-                        FROM MESSAGES m2 
-                        WHERE m2.chat_room_id = cr.chat_room_id 
-                        ORDER BY sent_at DESC 
-                        LIMIT 1
-                    ) as last_message,
-                    (
-                        SELECT sent_at 
-                        FROM MESSAGES m3 
-                        WHERE m3.chat_room_id = cr.chat_room_id 
-                        ORDER BY sent_at DESC 
-                        LIMIT 1
-                    ) as last_message_time,
-                    (
-                        SELECT COUNT(*) 
-                        FROM MESSAGES m4 
-                        WHERE m4.chat_room_id = cr.chat_room_id 
-                        AND m4.sender_id != ? 
-                        AND m4.read = 0
-                    ) as unread_count
-                FROM CHAT_ROOMS cr
-                JOIN USERS u ON (
-                    CASE 
-                        WHEN cr.sender_id = ? THEN cr.receiver_id
-                        ELSE cr.sender_id
-                    END = u.user_id
-                )
-                WHERE cr.sender_id = ? OR cr.receiver_id = ?
-                ORDER BY last_message_time DESC
-            `, [userId, userId, userId, userId, userId], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
-        });
-
-        // Se è stata selezionata una conversazione specifica
-        let activeConversation = null;
-        if (req.query.chatId) {
-            // Recupera i messaggi della conversazione selezionata
-            const messages = await new Promise((resolve, reject) => {
-                db.all(`
-                    SELECT 
-                        m.message_id,
-                        m.sender_id,
-                        m.content,
-                        m.sent_at,
-                        u.full_name as sender_name
-                    FROM MESSAGES m
-                    JOIN USERS u ON m.sender_id = u.user_id
-                    WHERE m.chat_room_id = ?
-                    ORDER BY m.sent_at ASC
-                `, [req.query.chatId], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows);
-                });
-            });
-
-            // Trova i dettagli dell'altro utente nella conversazione
-            const otherUser = conversations.find(conv => conv.chat_room_id.toString() === req.query.chatId);
-
-            if (otherUser) {
-                activeConversation = {
-                    chatId: req.query.chatId,
-                    otherUser: {
-                        id: otherUser.other_user_id,
-                        name: otherUser.other_user_name,
-                        type: otherUser.other_user_type,
-                        profileImage: '/placeholder.svg', // Placeholder per l'immagine profilo
-                        isOnline: false, // Implementare la logica per lo stato online
-                        lastSeen: 'Offline' // Implementare la logica per l'ultimo accesso
-                    },
-                    messages: messages.map(msg => ({
-                        id: msg.message_id,
-                        message: msg.content,
-                        time: new Date(msg.sent_at).toLocaleTimeString('it-IT', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }),
-                        isSent: msg.sender_id === userId
-                    }))
-                };
-
-                // Marca i messaggi come letti
-                db.run(`
-                    UPDATE MESSAGES 
-                    SET read = 1 
-                    WHERE chat_room_id = ? AND sender_id != ?
-                `, [req.query.chatId, userId]);
+    
+    // Recupera tutti gli utenti tranne l'utente corrente
+    db.all('SELECT user_id, full_name, email FROM USERS WHERE user_id != ?', 
+        [req.session.userId], 
+        (err, rows) => {
+            if (err) {
+                return res.status(500).send('Errore nel recupero utenti');
             }
-        }
-
-        // Formatta le conversazioni per il template
-        const formattedConversations = conversations.map(conv => ({
-            id: conv.chat_room_id,
-            isActive: req.query.chatId === conv.chat_room_id.toString(),
-            otherUser: {
-                id: conv.other_user_id,
-                name: conv.other_user_name,
-                type: conv.other_user_type,
-                profileImage: '/placeholder.svg' // Placeholder per l'immagine profilo
-            },
-            lastMessage: conv.last_message,
-            lastMessageTime: new Date(conv.last_message_time).toLocaleTimeString('it-IT', {
-                hour: '2-digit',
-                minute: '2-digit'
-            }),
-            unreadCount: conv.unread_count
-        }));
-
-        // Renderizza il template con i dati
-        res.render('messages', {
-            title: 'Messaggi',
-            user: req.session.user,
-            conversations: formattedConversations,
-            activeConversation: activeConversation,
-            loggedIn: true
+            res.json(rows);
         });
-
-    } catch (error) {
-        console.error('Errore nel recupero dei messaggi:', error);
-        res.status(500).render('error', { 
-            message: 'Si è verificato un errore nel caricamento dei messaggi',
-            loggedIn: true
-        });
-    }
 });
 
-// Endpoint per l'invio di un nuovo messaggio
-app.post('/messages/send', async (req, res) => {
-    if (!req.session.loggedin) {
-        return res.status(401).json({ error: 'Non autorizzato' });
-    }
-
-    const { chatRoomId, message } = req.body;
-    const senderId = req.session.user.id;
-
-    if (!chatRoomId || !message) {
-        return res.status(400).json({ error: 'Dati mancanti' });
-    }
+app.post('/chat/start', async (req, res) => {
+    const { userId } = req.body;
+    const currentUserId = req.session.userId; // Assumiamo che l'ID dell'utente corrente sia memorizzato nella sessione
 
     try {
-        // Verifica che l'utente sia parte della chat room
-        const chatRoom = await new Promise((resolve, reject) => {
-            db.get(
-                'SELECT * FROM CHAT_ROOMS WHERE chat_room_id = ? AND (sender_id = ? OR receiver_id = ?)',
-                [chatRoomId, senderId, senderId],
-                (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row);
-                }
-            );
-        });
-
-        if (!chatRoom) {
-            return res.status(403).json({ error: 'Non autorizzato ad inviare messaggi in questa chat' });
+        // Verifichiamo che l'utente corrente non stia cercando di chattare con se stesso
+        if (userId === currentUserId) {
+            return res.status(400).json({ error: 'Non puoi aviare una chat con te stesso' });
         }
 
-        // Inserisce il nuovo messaggio
-        await new Promise((resolve, reject) => {
-            db.run(
-                'INSERT INTO MESSAGES (chat_room_id, sender_id, content, sent_at, read) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)',
-                [chatRoomId, senderId, message],
-                (err) => {
-                    if (err) reject(err);
-                    else resolve();
-                }
-            );
-        });
+        // Verifichiamo se esiste già una chat room tra questi due utenti
+        const existingRoom = await db.get(
+            'SELECT * FROM CHAT_ROOMS WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)',
+            [currentUserId, userId, userId, currentUserId]
+        );
 
-        res.json({ success: true });
-
-    } catch (error) {
-        console.error('Errore nell\'invio del messaggio:', error);
-        res.status(500).json({ error: 'Errore nell\'invio del messaggio' });
-    }
-});
-
-// Endpoint per creare una nuova chat room
-app.post('/messages/create', async (req, res) => {
-    if (!req.session.loggedin) {
-        return res.status(401).json({ error: 'Non autorizzato' });
-    }
-
-    const { receiverId } = req.body;
-    const senderId = req.session.user.id;
-
-    if (!receiverId) {
-        return res.status(400).json({ error: 'Destinatario mancante' });
-    }
-
-    try {
-        // Verifica se esiste già una chat room tra questi utenti
-        const existingChatRoom = await new Promise((resolve, reject) => {
-            db.get(
-                `SELECT chat_room_id FROM CHAT_ROOMS 
-                 WHERE (sender_id = ? AND receiver_id = ?) 
-                 OR (sender_id = ? AND receiver_id = ?)`,
-                [senderId, receiverId, receiverId, senderId],
-                (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row);
-                }
-            );
-        });
-
-        if (existingChatRoom) {
-            return res.json({ chatRoomId: existingChatRoom.chat_room_id });
+        if (existingRoom) {
+            return res.json({ chatRoomId: existingRoom.chat_room_id });
         }
 
-        // Crea una nuova chat room
-        const result = await new Promise((resolve, reject) => {
-            db.run(
-                'INSERT INTO CHAT_ROOMS (sender_id, receiver_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
-                [senderId, receiverId],
-                function(err) {
-                    if (err) reject(err);
-                    else resolve(this.lastID);
-                }
-            );
-        });
+        // Se non esiste, creiamo una nuova chat room
+        const result = await db.run(
+            'INSERT INTO CHAT_ROOMS (sender_id, receiver_id, created_at) VALUES (?, ?, ?)',
+            [currentUserId, userId, new Date().toISOString()]
+        );
 
-        res.json({ chatRoomId: result });
+        const chatRoomId = result.lastID;
+
+        if (!chatRoomId) {
+            throw new Error('Impossibile creare una nuova chat room');
+        }
+
+        // Inviamo l'ID della chat room al client
+        res.json({ chatRoomId });
 
     } catch (error) {
-        console.error('Errore nella creazione della chat room:', error);
-        res.status(500).json({ error: 'Errore nella creazione della chat room' });
+        console.error('Errore durante l\'avvio della chat:', error);
+        res.status(500).json({ error: error.message || 'Si è verificato un errore durante l\'avvio della chat' });
     }
 });
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
 
 module.exports = app;
 app.use(express.static('public'));
