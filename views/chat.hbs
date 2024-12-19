@@ -302,8 +302,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+    <script src="chat.js"></script>
     <script src="/public/chat.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
+   
 
     <!-- Modal per nuova chat -->
     <div class="modal fade" id="newChatModal" tabindex="-1" aria-labelledby="newChatModalLabel" aria-hidden="true">
@@ -324,103 +325,6 @@
             </div>
         </div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const roomId = urlParams.get('room');
-            if (roomId) {
-                console.log('Chat room ID:', roomId);
-                // Qui puoi aggiungere la logica per caricare i messaggi della chat room
-                // ad esempio, fare una richiesta al server per ottenere i messaggi
-                // e popolare l'interfaccia utente
-            } else {
-                console.error('Nessun ID della chat room fornito');
-                // Gestisci il caso in cui non c'è un ID della chat room
-                // ad esempio, mostrando un messaggio all'utente o reindirizzando
-            }
-        });
-    </script>
-
-    <script>
-        // Gestione della ricerca utenti e creazione nuova chat
-        let users = [];
-
-        function openNewChat() {
-            const modal = new bootstrap.Modal(document.getElementById('newChatModal'));
-            loadUsers();
-            modal.show();
-        }
-
-        async function loadUsers() {
-            try {
-                const response = await fetch('/users/list');
-                if (!response.ok) throw new Error('Errore nel caricamento degli utenti');
-
-                users = await response.json();
-                displayUsers(users);
-            } catch (error) {
-                console.error('Errore:', error);
-                alert('Errore nel caricamento degli utenti');
-            }
-        }
-
-        function displayUsers(users) {
-            const usersList = document.getElementById('usersList');
-            usersList.innerHTML = users.map(user => `
-            <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
-                    onclick="startChat(${user.user_id})">
-                <div>
-                    <h6 class="mb-0">${user.full_name}</h6>
-                    <small class="text-muted">${user.email}</small>
-                </div>
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        `).join('');
-        }
-
-        // Gestione della ricerca in tempo reale
-        document.getElementById('userSearchInput')?.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filteredUsers = users.filter(user =>
-                user.full_name.toLowerCase().includes(searchTerm) ||
-                user.email.toLowerCase().includes(searchTerm)
-            );
-            displayUsers(filteredUsers);
-        });
-
-        async function startChat(userId) {
-            try {
-                const response = await fetch('/chat/start', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ userId })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Errore nell\'avvio della chat');
-                }
-
-                const result = await response.json();
-
-                if (!result.chatRoomId) {
-                    throw new Error('ID della chat room non ricevuto dal server');
-                }
-
-                // Chiudi il modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('newChatModal'));
-                modal.hide();
-
-                // Redirect alla chat con l'utente selezionato
-                window.location.href = `/chat?room=${result.chatRoomId}`;
-            } catch (error) {
-                console.error('Errore:', error);
-                alert('Errore nell\'avvio della chat: ' + error.message);
-            }
-        }
-    </script>
 </body>
 
 </html>

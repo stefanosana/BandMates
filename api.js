@@ -13,8 +13,6 @@ const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const router = express.Router();
 
-
-
 app.use(session({
     secret: 'session',
     resave: false,
@@ -73,103 +71,53 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  * @swagger
  * /signup:
  *   post:
- *     summary: Registra un nuovo utente (musicista o band)
- *     description: Permette la registrazione di un musicista o di una band sulla piattaforma BandMates.
+ *     summary: Registrazione utente
+ *     description: Permette a un utente di registrarsi come musicista o band.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - userType
- *               - full_name
- *               - email
- *               - password
- *               - location
  *             properties:
  *               userType:
  *                 type: string
  *                 enum: [musician, band]
- *                 description: Tipo di utente (musicista o band).
+ *                 description: Tipo di utente
  *                 example: musician
  *               full_name:
  *                 type: string
- *                 description: Nome completo dell'utente.
+ *                 description: Nome completo
  *                 example: John Doe
  *               email:
  *                 type: string
  *                 format: email
- *                 description: Indirizzo email unico.
+ *                 description: Email
  *                 example: johndoe@example.com
  *               password:
  *                 type: string
- *                 format: password
- *                 description: Password di almeno 6 caratteri.
+ *                 description: Password (minimo 6 caratteri)
  *                 example: password123
  *               location:
  *                 type: string
- *                 description: Località dell'utente.
- *                 example: New York
+ *                 description: Posizione geografica
+ *                 example: Milano
  *               instrument:
  *                 type: string
- *                 description: Strumento musicale suonato (solo per musicisti).
- *                 example: Guitar
- *               experience:
- *                 type: string
- *                 description: Livello di esperienza musicale (solo per musicisti).
- *                 example: Intermediate
- *               description:
- *                 type: string
- *                 description: Breve descrizione dell'utente.
- *                 example: Chitarrista con 5 anni di esperienza, amante del rock.
- *               looking_for:
- *                 type: string
- *                 description: Tipo di musicisti ricercati (solo per band).
- *                 example: Vocalist
+ *                 description: Strumento (solo per musicians)
+ *                 example: Chitarra
  *               genre:
  *                 type: string
- *                 description: Genere musicale della band (solo per band).
+ *                 description: Genere musicale (solo per bands)
  *                 example: Rock
  *     responses:
  *       200:
  *         description: Registrazione avvenuta con successo.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   description: Messaggio di conferma.
- *                   example: Registrazione avvenuta con successo come musicista
- *                 id:
- *                   type: integer
- *                   description: ID dell'utente registrato.
- *                   example: 1
  *       400:
- *         description: Errore di input nei dati forniti.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   description: Dettagli dell'errore.
- *                   example: Email già registrata
+ *         description: Errore nella richiesta.
  *       500:
  *         description: Errore interno del server.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   description: Dettagli dell'errore.
- *                   example: Errore durante la registrazione del musicista
- */
+ */  
 app.post('/signup', async (req, res) => {
     const { userType, full_name, email, password, instrument, experience, description, location, looking_for, genre } = req.body;
 
@@ -292,8 +240,8 @@ app.get('/login', (req, res) => {
  * @swagger
  * /login:
  *   post:
- *     summary: Effettua il login di un utente (musicista o band).
- *     description: Permette a un utente di effettuare il login tramite email e password. Se il login ha successo, l'utente viene rediretto alla home o dashboard. In caso di errore, viene restituito un messaggio di errore.
+ *     summary: Login utente
+ *     description: Consente a un utente registrato di effettuare l'accesso al sistema.
  *     requestBody:
  *       required: true
  *       content:
@@ -303,15 +251,16 @@ app.get('/login', (req, res) => {
  *             properties:
  *               email:
  *                 type: string
- *                 description: L'email dell'utente.
- *                 example: "user@example.com"
+ *                 format: email
+ *                 description: Email dell'utente.
+ *                 example: johndoe@example.com
  *               password:
  *                 type: string
- *                 description: La password dell'utente.
- *                 example: "password123"
+ *                 description: Password dell'utente.
+ *                 example: password123
  *     responses:
  *       200:
- *         description: Login riuscito. L'utente è reindirizzato alla home o dashboard in base al ruolo.
+ *         description: Login riuscito.
  *         content:
  *           application/json:
  *             schema:
@@ -319,42 +268,33 @@ app.get('/login', (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Login avvenuto con successo"
- *                 redirectUrl:
- *                   type: string
- *                   example: "/home"  # URL della pagina di destinazione
+ *                   example: "Login effettuato con successo"
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: integer
+ *                       example: 1
+ *                     full_name:
+ *                       type: string
+ *                       example: "John Doe"
+ *                     userType:
+ *                       type: string
+ *                       example: "musician"
+ *                     role:
+ *                       type: string
+ *                       example: "admin"
+ *                     loggedIn:
+ *                       type: boolean
+ *                       example: true
+ *                     additionalDetails:
+ *                       type: object
  *       400:
- *         description: Corpo della richiesta o campi obbligatori mancanti.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Email e password sono obbligatorie"
+ *         description: Errore nella richiesta.
  *       401:
- *         description: Credenziali errate (email o password non corrispondono).
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Credenziali errate"
+ *         description: Credenziali errate.
  *       500:
- *         description: Errore interno del server durante il login.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Errore durante l'accesso"
- *     security:
- *       - sessionAuth: []  # L'autenticazione è gestita tramite la sessione dell'utente.
+ *         description: Errore interno del server.
  */
 app.post('/login', (req, res) => {
     if (!req.body) {
@@ -692,31 +632,18 @@ app.get('/admin/feedback', (req, res) => {
  * @swagger
  * /home:
  *   get:
- *     summary: Visualizza la homepage per l'utente autenticato.
- *     description: Se l'utente è autenticato, viene reindirizzato alla homepage in base al suo ruolo. Gli amministratori vengono reindirizzati alla home amministratore, mentre gli altri utenti (musicisti o band) vedono la loro homepage personalizzata. Se l'utente non è autenticato, viene reindirizzato alla pagina di login.
+ *     summary: Home utente
+ *     description: Visualizza la home page basata sul ruolo dell'utente autenticato. Gli utenti non autenticati vengono reindirizzati alla pagina di login.
  *     responses:
  *       200:
- *         description: Pagina della home visualizzata con successo.
+ *         description: Home page caricata con successo.
  *         content:
  *           text/html:
  *             schema:
  *               type: string
- *               description: Contenuto HTML della homepage per l'utente.
+ *               example: "<!DOCTYPE html> <html> <head> <title>Home</title> </head> <body>...</body></html>"
  *       302:
- *         description: Reindirizzamento alla pagina di login per gli utenti non autenticati.
- *         headers:
- *           Location:
- *             description: URL della pagina di login.
- *             schema:
- *               type: string
- *               example: /login
- *       403:
- *         description: Accesso negato se l'utente non ha il ruolo di amministratore.
- *         content:
- *           text/html:
- *             schema:
- *               type: string
- *               description: Messaggio di errore che indica accesso negato.
+ *         description: Reindirizzamento alla pagina di login per utenti non autenticati.
  */
 app.get('/home', (req, res) => {
     if (req.session.loggedIn) {
@@ -837,9 +764,14 @@ app.post('/chat/start', async (req, res) => {
             [currentUserId, userId, userId, currentUserId]
         );
 
-        if (existingRoom) {
+        console.log("1")
+        console.log(existingRoom)
+
+        if (existingRoom.chatRoomId) {
             return res.json({ chatRoomId: existingRoom.chat_room_id });
         }
+
+        console.log("2")
 
         // Se non esiste, creiamo una nuova chat room
         const result = await db.run(
@@ -847,14 +779,22 @@ app.post('/chat/start', async (req, res) => {
             [currentUserId, userId, new Date().toISOString()]
         );
 
+        console.log("3")
+
+        console.log(result)
+
+
+        
+
         const chatRoomId = result.lastID;
+
 
         if (!chatRoomId) {
             throw new Error('Impossibile creare una nuova chat room');
         }
 
         // Inviamo l'ID della chat room al client
-        res.json({ chatRoomId });
+        res.json({ "chatRoomId": 111111});
 
     } catch (error) {
         console.error('Errore durante l\'avvio della chat:', error);
