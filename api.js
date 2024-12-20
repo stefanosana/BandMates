@@ -13,12 +13,16 @@ const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const router = express.Router();
 
+
 app.use(session({
-    secret: 'session',
+    secret: 'session', // Cambia questo con una stringa segreta robusta
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: process.env.NODE_ENV === "production" }
-}));
+    cookie: { 
+      secure: process.env.NODE_ENV === "production", // Usa HTTPS in produzione
+      maxAge: 1000 * 60 * 60 * 24 // 24 ore
+    }
+  }));
 
 //const mock = require('./DBMock.js');
 //const db = new mock();
@@ -66,6 +70,26 @@ const swaggerDocs = swaggerJSDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+const validateEmail = async (email) => {
+    try {
+        const apiKey = '7ffd7f1771bc4f8e882b3b6cc61f03ae'; // Chiave API per Abstract API
+        const response = await fetch(`https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${email}`);
+        const data = await response.json();
+
+        if (data.is_valid_format && data.is_valid_format.value) {
+            console.log('Email valida:', email);
+            return true; // Email valida
+        } else {
+            console.error('Email non valida:', data);
+            return false; // Email non valida
+        }
+    } catch (error) {
+        console.error('Errore durante la validazione dell\'email:', error);
+        return false; // Tratta errori API come email non valida
+    }
+};
+
 
 /**
  * @swagger
@@ -134,6 +158,12 @@ app.post('/signup', async (req, res) => {
     // Verifica che il campo `userType` sia valido
     if (userType !== "musician" && userType !== "band") {
         return res.status(400).json({ error: "Il campo userType deve essere 'musician' o 'band'" });
+    }
+
+    // Verifica email tramite Abstract API
+    const isEmailValid = await validateEmail(email);
+    if (!isEmailValid) {
+        return res.status(400).json({ error: "L'indirizzo email non è valido." });
     }
 
     // Verifica dei campi specifici in base al tipo di utente
@@ -646,7 +676,7 @@ app.get('/admin/feedback', (req, res) => {
  *         description: Reindirizzamento alla pagina di login per utenti non autenticati.
  */
 app.get('/home', (req, res) => {
-    if (req.session.loggedIn) {
+    if (req.session.loggedIn === true) {
         if (req.session.role === 'admin') {
             res.render('admin/home', {
                 fullName: req.session.full_name,
@@ -707,16 +737,91 @@ app.get('/admin/users', isAdmin, (req, res) => {
     });
 });
 
-app.delete('/admin/delete-user/:id', isAdmin, (req, res) => {
+app.get('/admin/delete-user/:id', isAdmin, (req, res) => {
     const { id } = req.params;
-    db.run(`DELETE FROM musicians WHERE musician_id = ?`, [id], function (err) {
+
+    db.get(`SELECT * FROM users WHERE user_id = ?`, [id], (err, row) => {
         if (err) {
             console.error(err);
-            return res.status(500).json({ error: 'Errore durante l\'eliminazione dell\'utente' });
+            return res.status(500).json({ error: 'Errore durante il recupero delle informazioni dell\'utente' });
         }
-        res.json({ message: `Utente con ID ${id} eliminato.` });
+
+        if (!row) {
+            return res.status(404).json({ error: `Utente con ID ${id} non trovato.` });
+        }
+
+        res.json({ user: row });
     });
 });
+
+app.delete('/admin/delete-user/:id', isAdmin, (req, res) => {
+    const id = parseInt(req.params.id); // Convertiamo l'ID in numero
+
+    if (isNaN(id)) {
+        return res.status(400).json({ error: 'ID utente non valido' });
+    }
+
+    // Inizia una transazione
+    db.run('BEGIN TRANSACTION', (err) => {
+        if (err) {
+            console.error('Errore nell\'iniziare la transazione:', err);
+            return res.status(500).json({ error: 'Errore del server' });
+        }
+
+        /*
+        // Prima elimina tutti i messaggi dell'utente
+        db.run('DELETE FROM MESSAGES WHERE sender_id = ? OR receiver_id = ?', [id, id], (err) => {
+            if (err) {
+                console.error('Errore nell\'eliminazione dei messaggi:', err);
+                return db.run('ROLLBACK', () => {
+                    res.status(500).json({ error: 'Errore nell\'eliminazione dei messaggi' });
+                });
+            } */
+
+
+        /*
+                    // Poi elimina tutte le chat room dell'utente
+                    db.run('DELETE FROM CHAT_ROOMS WHERE sender_id = ? OR receiver_id = ?', [id, id], (err) => {
+                        if (err) {
+                            console.error('Errore nell\'eliminazione delle chat room:', err);
+                            return db.run('ROLLBACK', () => {
+                                res.status(500).json({ error: 'Errore nell\'eliminazione delle chat room' });
+                            });
+                        } */
+
+        // Infine elimina l'utente
+        db.run('DELETE FROM USERS WHERE user_id = ?', [id], function (err) {
+            if (err) {
+                console.error('Errore nell\'eliminazione dell\'utente:', err);
+                return db.run('ROLLBACK', () => {
+                    res.status(500).json({ error: 'Errore nell\'eliminazione dell\'utente' });
+                });
+            }
+
+            // Verifica se l'utente è stato effettivamente eliminato
+            if (this.changes === 0) {
+                return db.run('ROLLBACK', () => {
+                    res.status(404).json({ error: `Utente con ID ${id} non trovato` });
+                });
+            }
+
+            // Se tutto è andato bene, conferma la transazione
+            db.run('COMMIT', (err) => {
+                if (err) {
+                    console.error('Errore nel confermare la transazione:', err);
+                    return db.run('ROLLBACK', () => {
+                        res.status(500).json({ error: 'Errore nel confermare l\'eliminazione' });
+                    });
+                }
+                res.json({
+                    message: `Utente con ID ${id} eliminato con successo`,
+                    deletedUserId: id
+                });
+            });
+        });
+    });
+});
+    
 
 //----------------------------------------------------------------------------------| CHAT |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //endpoint get per visualizzare la chat
@@ -755,7 +860,7 @@ app.post('/chat/start', async (req, res) => {
     try {
         // Verifichiamo che l'utente corrente non stia cercando di chattare con se stesso
         if (userId === currentUserId) {
-            return res.status(400).json({ error: 'Non puoi aviare una chat con te stesso' });
+            return res.status(400).json({ error: 'Non puoi avviare una chat con te stesso' });
         }
 
         // Verifichiamo se esiste già una chat room tra questi due utenti
@@ -764,14 +869,10 @@ app.post('/chat/start', async (req, res) => {
             [currentUserId, userId, userId, currentUserId]
         );
 
-        console.log("1")
-        console.log(existingRoom)
-
-        if (existingRoom.chatRoomId) {
+        if (existingRoom) {
+            // Se esiste già una chat room, restituiamo il suo ID
             return res.json({ chatRoomId: existingRoom.chat_room_id });
         }
-
-        console.log("2")
 
         // Se non esiste, creiamo una nuova chat room
         const result = await db.run(
@@ -779,33 +880,25 @@ app.post('/chat/start', async (req, res) => {
             [currentUserId, userId, new Date().toISOString()]
         );
 
-        console.log("3")
+        // Recupera l'ID della chat room appena creata
+        const newRoom = await db.get(
+            'SELECT chat_room_id FROM CHAT_ROOMS WHERE sender_id = ? AND receiver_id = ?',
+            [currentUserId, userId]
+        );
 
-        console.log(result)
-
-
-        
-
-        const chatRoomId = result.lastID;
-
-
-        if (!chatRoomId) {
-            throw new Error('Impossibile creare una nuova chat room');
+        if (newRoom) {
+            console.log(newRoom.chat_room_id)
+            return res.json({ chatRoomId: newRoom.chat_room_id });
+        } else {
+            return res.status(500).json({ error: 'Errore durante la creazione della chat room' });
         }
-
-        // Inviamo l'ID della chat room al client
-        res.json({ "chatRoomId": 111111});
-
     } catch (error) {
-        console.error('Errore durante l\'avvio della chat:', error);
-        res.status(500).json({ error: error.message || 'Si è verificato un errore durante l\'avvio della chat' });
+        console.error('Errore durante la gestione della chat:', error.message);
+        res.status(500).json({ error: 'Errore interno del server' });
     }
 });
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
 
 
 module.exports = app;
