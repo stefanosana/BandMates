@@ -14,6 +14,17 @@ const swaggerUi = require('swagger-ui-express');
 const router = express.Router();
 
 
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
+app.use(session({
+    secret: 'tuoSegretoSuperSicuro',
+    resave: false,  // Aggiunto per evitare il warning
+    saveUninitialized: false  // Aggiunto per evitare il warning
+}));
+
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(session({
     secret: 'session', // Cambia questo con una stringa segreta robusta
     resave: false,
@@ -70,25 +81,46 @@ const swaggerDocs = swaggerJSDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//google 
+// Inizializza Passport e sessioni
+app.use(passport.initialize());
+app.use(passport.session());
 
-const validateEmail = async (email) => {
-    try {
-        const apiKey = '7ffd7f1771bc4f8e882b3b6cc61f03ae'; // Chiave API per Abstract API
-        const response = await fetch(`https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${email}`);
-        const data = await response.json();
+// Configurazione per il login tramite Google
+passport.use(new GoogleStrategy({
+    clientID: 'api',
+    clientSecret: 'api',
+    callbackURL: 'http://localhost:3000/auth/google/callback'
+}, (accessToken, refreshToken, profile, done) => {
+    // Puoi salvare o gestire il profilo utente qui
+    return done(null, profile);
+}));
 
-        if (data.is_valid_format && data.is_valid_format.value) {
-            console.log('Email valida:', email);
-            return true; // Email valida
-        } else {
-            console.error('Email non valida:', data);
-            return false; // Email non valida
-        }
-    } catch (error) {
-        console.error('Errore durante la validazione dell\'email:', error);
-        return false; // Tratta errori API come email non valida
+// Serializzazione e deserializzazione utente
+passport.serializeUser((user, done) => {
+    done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+    done(null, user);
+});
+
+// Rotte per il login tramite Google
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/auth/google/callback', passport.authenticate('google', {
+    failureRedirect: '/login'
+}), (req, res) => {
+    res.redirect('/signup_google.html'); // Reindirizza alla pagina desiderata
+});
+
+// Middleware per verificare se l'utente è autenticato
+function ensureAuthenticated(req, res, next) {
+    if (req.isAuthenticated() || req.session.loggedin) {
+        return next();
     }
-};
+    res.redirect('/login');
+}
 
 
 /**

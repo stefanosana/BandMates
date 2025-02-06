@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completa il tuo profilo</title>
+    <script defer src="signup_google.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Completa il tuo profilo</h2>
+        <form id="signupGoogleForm">
+            <label for="name">Nome Completo</label>
+            <input type="text" id="name" name="name" required readonly>
+
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required readonly>
+
+            <label for="description">Descrizione (opzionale)</label>
+            <textarea id="description" name="description"></textarea>
+
+            <label for="location">Posizione (opzionale)</label>
+            <input type="text" id="location" name="location">
+
+            <button type="submit">Salva</button>
+        </form>
+    </div>
+</body>
+</html>
