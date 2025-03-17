@@ -12,10 +12,9 @@ app.use(session({ secret: 'session' }));
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const router = express.Router();
-
-
+require('dotenv').config();
 const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
 
 app.use(session({
     secret: 'tuoSegretoSuperSicuro',
@@ -85,42 +84,50 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 // Inizializza Passport e sessioni
 app.use(passport.initialize());
 app.use(passport.session());
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
-// Configurazione per il login tramite Google
 passport.use(new GoogleStrategy({
-    clientID: 'api',
-    clientSecret: 'api',
-    callbackURL: 'http://localhost:3000/auth/google/callback'
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.CALLBACK_URL
 }, (accessToken, refreshToken, profile, done) => {
-    // Puoi salvare o gestire il profilo utente qui
+    console.log('Google profile:', profile);
     return done(null, profile);
 }));
 
-// Serializzazione e deserializzazione utente
 passport.serializeUser((user, done) => {
-    done(null, user);
+    done(null, user.id);
 });
 
-passport.deserializeUser((user, done) => {
-    done(null, user);
+passport.deserializeUser((id, done) => {
+    done(null, { id });
 });
 
-// Rotte per il login tramite Google
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+app.use(passport.initialize());
+app.use(passport.session());
 
-app.get('/auth/google/callback', passport.authenticate('google', {
-    failureRedirect: '/login'
-}), (req, res) => {
-    res.redirect('/signup_google.html'); // Reindirizza alla pagina desiderata
-});
+app.get('/auth/google', 
+    passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        state: true,
+        prompt: 'consent'
+    })
+);
 
-// Middleware per verificare se l'utente è autenticato
+app.get('/auth/google/callback', 
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    (req, res) => {
+        res.redirect('/signup_google.html');
+    }
+);
+
 function ensureAuthenticated(req, res, next) {
-    if (req.isAuthenticated() || req.session.loggedin) {
+    if (req.isAuthenticated()) {
         return next();
     }
     res.redirect('/login');
 }
+
 
 
 /**
@@ -192,12 +199,7 @@ app.post('/signup', async (req, res) => {
         return res.status(400).json({ error: "Il campo userType deve essere 'musician' o 'band'" });
     }
 
-    // Verifica email tramite Abstract API
-    const isEmailValid = await validateEmail(email);
-    if (!isEmailValid) {
-        return res.status(400).json({ error: "L'indirizzo email non è valido." });
-    }
-
+    
     // Verifica dei campi specifici in base al tipo di utente
     if (userType === "musician" && !instrument) {
         return res.status(400).json({ error: "Il campo instrument è obbligatorio per i musicisti" });

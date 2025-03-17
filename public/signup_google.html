@@ -1,29 +1,268 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Completa il tuo profilo</title>
-    <script defer src="signup_google.js"></script>
+    <title>BandMates - Registrati</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        /* Navbar */
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav .nav-link {
+            font-size: 1.1rem;
+        }
+
+        .navbar {
+            padding: 1rem 2rem;
+        }
+
+        /* Hero section (barra di ricerca) */
+        .hero-section {
+            height: 70vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            color: white;
+            text-align: center;
+        }
+
+        .search-bar {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .search-bar input {
+            padding: 1.2rem;
+            border-radius: 50px 0 0 50px;
+            border: none;
+            outline: none;
+            width: 75%;
+        }
+
+        .search-bar button {
+            padding: 1.2rem 2rem;
+            border-radius: 0 50px 50px 0;
+            border: none;
+            background-color: #ffc107;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .search-bar button:hover {
+            background-color: #e0a800;
+        }
+
+
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #343a40;
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+        }
+
+        footer a {
+            color: #ffc107;
+        }
+
+        footer a:hover {
+            text-decoration: none;
+        }
+
+        /* Aggiustamenti per i form */
+        .form-label {
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select,
+        textarea {
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        textarea {
+            resize: none;
+        }
+    </style>
 </head>
+
 <body>
-    <div class="container">
-        <h2>Completa il tuo profilo</h2>
-        <form id="signupGoogleForm">
-            <label for="name">Nome Completo</label>
-            <input type="text" id="name" name="name" required readonly>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">BandMates</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="login.html">Accedi</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required readonly>
+    <!-- Signup Section -->
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body p-5">
+                        <h2 class="text-center mb-4">Crea il tuo account</h2>
+                        <form id="signupForm" method="post">
+                            <!-- Tipo di account: Musicista o Band -->
+                            <div class="mb-3">
+                                <label for="userType" class="form-label">Registrati come</label>
+                                <select class="form-select" id="userType" name="userType" required>
+                                    <option value="musician">Musicista Singolo</option>
+                                    <option value="band">Band</option>
+                                </select>
+                            </div>
 
-            <label for="description">Descrizione (opzionale)</label>
-            <textarea id="description" name="description"></textarea>
+                            <!-- Nome completo o Nome della Band -->
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nome Completo / Nome della Band</label>
+                                <input type="text" class="form-control" id="name" name="name"
+                                    placeholder="Inserisci il tuo nome o quello della band" required>
+                            </div>
 
-            <label for="location">Posizione (opzionale)</label>
-            <input type="text" id="location" name="location">
+                            <!-- Email -->
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                    placeholder="Inserisci la tua email" required>
+                            </div>
 
-            <button type="submit">Salva</button>
-        </form>
+                            <!-- Password -->
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" name="password"
+                                    placeholder="Crea una password" required>
+                            </div>
+
+                            <!-- Strumento (solo per musicisti) -->
+                            <div id="musicianFields" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="instrument" class="form-label">Strumento Suonato</label>
+                                    <input type="text" class="form-control" id="instrument" name="instrument"
+                                        placeholder="Inserisci lo strumento suonato (es. chitarra, batteria)">
+                                </div>
+
+                                <!-- Livello di abilità -->
+                                <div class="mb-3">
+                                    <label for="skillLevel" class="form-label">Livello di Abilità</label>
+                                    <select class="form-select" id="skillLevel" name="skillLevel">
+                                        <option value="beginner">Principiante</option>
+                                        <option value="intermediate">Intermedio</option>
+                                        <option value="advanced">Avanzato</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Descrizione -->
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Descrizione</label>
+                                <textarea class="form-control" id="description" name="description"
+                                    placeholder="Descrivi te stesso o la band"></textarea>
+                            </div>
+
+                            <!-- Cercando (solo per band) -->
+                            <div id="bandFields" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="lookingFor" class="form-label">Cercando</label>
+                                    <input type="text" class="form-control" id="lookingFor" name="lookingFor"
+                                        placeholder="Inserisci che tipo di musicisti stai cercando">
+                                </div>
+
+                                <!-- Genere (solo per band) -->
+                                <div class="mb-3" id="bandFieldsGenre" style="display: none;">
+                                    <label for="genre" class="form-label">Genere</label>
+                                    <input type="text" class="form-control" id="genre" name="genre"
+                                        placeholder="Inserisci il genere musicale della band (es. rock, jazz, pop)">
+                                </div>
+                            </div>
+
+                            <!-- Posizione -->
+                            <div class="mb-3">
+                                <label for="location" class="form-label">Posizione</label>
+                                <input type="text" class="form-control" id="location" name="location"
+                                    placeholder="Inserisci la tua città o posizione attuale">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">Registrati</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="signup.js"></script>
+
+
+
+    <script>
+        // Cambia la visualizzazione dei campi in base al tipo di utente selezionato
+        document.getElementById('userType').addEventListener('change', function () {
+            const userType = this.value;
+            if (userType === 'musician') {
+                document.getElementById('musicianFields').style.display = 'block';
+                document.getElementById('bandFields').style.display = 'none';
+            } else if (userType === 'band') {
+                document.getElementById('musicianFields').style.display = 'none';
+                document.getElementById('bandFields').style.display = 'block';
+                document.getElementById('bandFieldsGenre').style.display = 'block';  // Mostra il campo Genere
+            }
+        });
+
+        // Imposta la visualizzazione corretta al caricamento della pagina
+        document.getElementById('userType').dispatchEvent(new Event('change'));
+
+    </script>
 </body>
+
 </html>
