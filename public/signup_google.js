@@ -1,31 +1,27 @@
 document.addEventListener("DOMContentLoaded", async function () {
-    let params = new URLSearchParams(window.location.search);
-    let email = params.get("email");
-    let name = params.get("name");
+    try {
+        // Recupera i dati della sessione
+        const response = await fetch('http://localhost:3000/session-user');
+        if (response.ok) {
+            const userData = await response.json();
 
-    if (!email || !name) {
-        // Recupera i dati della sessione se non presenti nella URL
-        try {
-            const response = await fetch('http://localhost:3000/session-user');
-            if (response.ok) {
-                const userData = await response.json();
-                email = userData.email;
-                name = userData.full_name;
-            }
-        } catch (error) {
-            console.error("Errore nel recupero dell'utente dalla sessione", error);
+            // Precompila i campi della form con i dati recuperati
+            document.getElementById("email").value = userData.email;
+            document.getElementById("name").value = userData.name;
+        } else {
+            console.error("Errore nel recupero dell'utente dalla sessione");
         }
+    } catch (error) {
+        console.error("Errore di connessione al server:", error);
     }
 
-    document.getElementById("email").value = email;
-    document.getElementById("name").value = name;
-
+    // Gestione dell'invio della form
     document.getElementById("signupGoogleForm").addEventListener("submit", async function (event) {
         event.preventDefault();
 
         const data = {
-            email,
-            full_name: name,
+            email: document.getElementById("email").value,
+            full_name: document.getElementById("name").value,
             description: document.getElementById("description").value,
             location: document.getElementById("location").value
         };
@@ -40,10 +36,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (response.ok) {
                 window.location.href = '/home';
             } else {
-                alert("Errore durante la registrazione.");
+                const errorData = await response.json();
+                alert(`Errore durante la registrazione: ${errorData.message}`);
             }
         } catch (error) {
-            console.error("Errore:", error);
+            console.error("Errore di connessione al server:", error);
             alert("Errore di connessione al server.");
         }
     });

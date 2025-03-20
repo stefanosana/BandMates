@@ -86,25 +86,36 @@ app.use(passport.initialize());
 app.use(passport.session());
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
+app.use(passport.initialize());
+app.use(passport.session());
+
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: process.env.CALLBACK_URL
 }, (accessToken, refreshToken, profile, done) => {
     console.log('Google profile:', profile);
-    return done(null, profile);
+
+    // Estrai email e nome dal profilo
+    const user = {
+        id: profile.id,
+        email: profile.emails[0].value,
+        name: profile.displayName
+    };
+
+    // Salva direttamente nella sessione
+    done(null, user);
 }));
 
+// Salvataggio nella sessione
 passport.serializeUser((user, done) => {
-    done(null, user.id);
+    done(null, user);
 });
 
-passport.deserializeUser((id, done) => {
-    done(null, { id });
+// Recupero dalla sessione
+passport.deserializeUser((user, done) => {
+    done(null, user);
 });
-
-app.use(passport.initialize());
-app.use(passport.session());
 
 app.get('/auth/google', 
     passport.authenticate('google', {
@@ -120,6 +131,17 @@ app.get('/auth/google/callback',
         res.redirect('/signup_google.html');
     }
 );
+
+app.get('/session-user', (req, res) => {
+    if (req.isAuthenticated()) {
+        res.json({
+            email: req.user.email,
+            name: req.user.name
+        });
+    } else {
+        res.status(401).json({ error: 'Utente non autenticato' });
+    }
+});
 
 function ensureAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
@@ -268,6 +290,131 @@ app.post('/signup', async (req, res) => {
         res.status(500).json({ error: "Errore interno del server" });
     }
 });
+
+app.post('/completa-profilo', async (req, res) => {
+    const { email, userType, instrument, skillLevel, description, location, lookingFor, genre } = req.body;
+
+    if (!userType || !location) {
+        return res.status(400).json({ error: "I campi userType e location sono obbligatori" });
+    }
+
+    if (!email) {
+        return res.status(400).json({ error: "Il campo email è obbligatorio" });
+    }
+    if (!userType || !location) {
+        return res.status(400).json({ error: "I campi userType e location sono obbligatori" });
+    }
+
+    if (userType !== 'musician' && userType !== 'band') {
+        return res.status(400).json({ error: "Il campo userType deve essere 'musician' o 'band'" });
+    }
+
+    try {
+        // Controlla se l'utente esiste già nel database
+        db.get(`SELECT user_id FROM USERS WHERE email = ?`, [email], (err, row) => {
+            if (err) {
+                console.error("Errore durante la ricerca dell'utente:", err.message);
+                return res.status(500).json({ error: "Errore durante la ricerca dell'utente" });
+            }
+
+            if (!row) {
+                return res.status(404).json({ error: "Utente non trovato" });
+            }
+
+            const userId = row.id;
+
+            // Aggiorna i dati dell'utente nella tabella USERS
+            db.run(
+                `UPDATE USERS SET userType = ?, location = ? WHERE user_id = ?`,
+                [userType, location, userId],
+                (err) => {
+                    if (err) {
+                        console.error("Errore durante l'aggiornamento dell'utente:", err.message);
+                        return res.status(500).json({ error: "Errore durante l'aggiornamento dell'utente" });
+                    }
+
+                    if (userType === 'musician') {
+                        // Verifica se esiste già un record in MUSICIANS
+                        db.get(`SELECT musician_id FROM MUSICIANS WHERE user_id = ?`, [userId], (err, musician) => {
+                            if (err) {
+                                console.error("Errore durante il controllo del musicista:", err.message);
+                                return res.status(500).json({ error: "Errore durante il controllo del musicista" });
+                            }
+
+                            if (musician) {
+                                // Aggiorna il record in MUSICIANS
+                                db.run(
+                                    `UPDATE MUSICIANS SET instrument = ?, experience = ?, description = ? WHERE user_id = ?`,
+                                    [instrument, skillLevel, description, userId],
+                                    (err) => {
+                                        if (err) {
+                                            console.error("Errore durante l'aggiornamento del musicista:", err.message);
+                                            return res.status(500).json({ error: "Errore durante l'aggiornamento del musicista" });
+                                        }
+                                        res.json({ message: 'Registrazione completata come musicista' });
+                                    }
+                                );
+                            } else {
+                                // Crea un nuovo record in MUSICIANS
+                                db.run(
+                                    `INSERT INTO MUSICIANS (musician_id, instrument, experience, description) VALUES (?, ?, ?, ?)`,
+                                    [userId, instrument, skillLevel, description],
+                                    (err) => {
+                                        if (err) {
+                                            console.error("Errore durante la creazione del musicista:", err.message);
+                                            return res.status(500).json({ error: "Errore durante la creazione del musicista" });
+                                        }
+                                        res.json({ message: 'Registrazione completata come musicista' });
+                                    }
+                                );
+                            }
+                        });
+                    } else if (userType === 'band') {
+                        // Verifica se esiste già un record in BANDS
+                        db.get(`SELECT id FROM BANDS WHERE user_id = ?`, [userId], (err, band) => {
+                            if (err) {
+                                console.error("Errore durante il controllo della band:", err.message);
+                                return res.status(500).json({ error: "Errore durante il controllo della band" });
+                            }
+
+                            if (band) {
+                                // Aggiorna il record in BANDS
+                                db.run(
+                                    `UPDATE BANDS SET description = ?, looking_for = ?, genre = ? WHERE user_id = ?`,
+                                    [description, lookingFor, genre, userId],
+                                    (err) => {
+                                        if (err) {
+                                            console.error("Errore durante l'aggiornamento della band:", err.message);
+                                            return res.status(500).json({ error: "Errore durante l'aggiornamento della band" });
+                                        }
+                                        res.json({ message: 'Registrazione completata come band' });
+                                    }
+                                );
+                            } else {
+                                // Crea un nuovo record in BANDS
+                                db.run(
+                                    `INSERT INTO BANDS (user_id, description, looking_for, genre) VALUES (?, ?, ?, ?)`,
+                                    [userId, description, lookingFor, genre],
+                                    (err) => {
+                                        if (err) {
+                                            console.error("Errore durante la creazione della band:", err.message);
+                                            return res.status(500).json({ error: "Errore durante la creazione della band" });
+                                        }
+                                        res.json({ message: 'Registrazione completata come band' });
+                                    }
+                                );
+                            }
+                        });
+                    }
+                }
+            );
+        });
+    } catch (error) {
+        console.error("Errore interno del server:", error.message);
+        res.status(500).json({ error: "Errore interno del server" });
+    }
+});
+
 
 /**
  * @swagger

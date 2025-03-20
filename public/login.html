@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,32 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
     <style>
+        .google-btn {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            justify-content: center;
+            width: 240px;
+            padding: 10px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 16px;
+            color: #757575;
+            text-decoration: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+        }
+
+        .google-btn img {
+            width: 20px;
+            margin-right: 10px;
+        }
+
+        .google-btn:hover {
+            background-color: #f1f1f1;
+        }
+
         /* Aggiungi questo per il footer sticky */
         html,
         body {
@@ -191,10 +218,14 @@
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-primary btn-lg">Accedi</button>
                             </div>
-                            <span id="error"></span>
+                            <span id="error"></span> 
                         </form>
 
-                        <a href="/auth/google" class="google-login-button">Accedi con Google</a>
+                        <a href="/auth/google" class="google-btn">
+                            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+                            Accedi con Google
+                        </a>
+                        <br>
                         <p class="text-center mt-3">Non hai un account? <a href="signup.html">Registrati qui</a></p>
                     </div>
                 </div>
