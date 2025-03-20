@@ -357,7 +357,7 @@ app.post('/completa-profilo', async (req, res) => {
                             } else {
                                 // Crea un nuovo record in MUSICIANS
                                 db.run(
-                                    `INSERT INTO MUSICIANS (musician_id, instrument, experience, description) VALUES (?, ?, ?, ?)`,
+                                    `INSERT INTO MUSICIANS (user_id, instrument, experience, description) VALUES (?, ?, ?, ?)`,
                                     [userId, instrument, skillLevel, description],
                                     (err) => {
                                         if (err) {
@@ -371,7 +371,7 @@ app.post('/completa-profilo', async (req, res) => {
                         });
                     } else if (userType === 'band') {
                         // Verifica se esiste già un record in BANDS
-                        db.get(`SELECT id FROM BANDS WHERE user_id = ?`, [userId], (err, band) => {
+                        db.get(`SELECT band_id FROM BANDS WHERE user_id = ?`, [userId], (err, band) => {
                             if (err) {
                                 console.error("Errore durante il controllo della band:", err.message);
                                 return res.status(500).json({ error: "Errore durante il controllo della band" });

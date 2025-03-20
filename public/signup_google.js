@@ -1,13 +1,15 @@
+let userData = null;
+
 document.addEventListener("DOMContentLoaded", async function () {
     try {
         // Recupera i dati della sessione
         const response = await fetch('http://localhost:3000/session-user');
         if (response.ok) {
-            const userData = await response.json();
+            userData = await response.json(); // ✅ Assegna alla variabile globale
 
             // Precompila i campi della form con i dati recuperati
-            document.getElementById("email").value = userData.email;
-            document.getElementById("name").value = userData.name;
+            document.getElementById("email").value = userData.email || '';
+            document.getElementById("name").value = userData.name || '';
         } else {
             console.error("Errore nel recupero dell'utente dalla sessione");
         }
@@ -19,15 +21,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("signupGoogleForm").addEventListener("submit", async function (event) {
         event.preventDefault();
 
+        if (!userData) {
+            alert("Errore: dati utente non disponibili.");
+            return;
+        }
+
         const data = {
-            email: document.getElementById("email").value,
-            full_name: document.getElementById("name").value,
+            email: userData.email,
+            full_name: userData.name,
             description: document.getElementById("description").value,
             location: document.getElementById("location").value
         };
 
+        console.log('Dati inviati:', data);
+
         try {
-            const response = await fetch('http://localhost:3000/completa-profilo', {
+            const response = await fetch('/completa-profilo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
