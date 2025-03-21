@@ -28,11 +28,11 @@ app.use(session({
     secret: 'session', // Cambia questo con una stringa segreta robusta
     resave: false,
     saveUninitialized: false,
-    cookie: { 
-      secure: process.env.NODE_ENV === "production", // Usa HTTPS in produzione
-      maxAge: 1000 * 60 * 60 * 24 // 24 ore
+    cookie: {
+        secure: process.env.NODE_ENV === "production", // Usa HTTPS in produzione
+        maxAge: 1000 * 60 * 60 * 24 // 24 ore
     }
-  }));
+}));
 
 //const mock = require('./DBMock.js');
 //const db = new mock();
@@ -89,6 +89,8 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 app.use(passport.initialize());
 app.use(passport.session());
 
+
+
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -117,7 +119,7 @@ passport.deserializeUser((user, done) => {
     done(null, user);
 });
 
-app.get('/auth/google', 
+app.get('/auth/google',
     passport.authenticate('google', {
         scope: ['profile', 'email'],
         state: true,
@@ -125,10 +127,77 @@ app.get('/auth/google',
     })
 );
 
-app.get('/auth/google/callback', 
+app.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
-        res.redirect('/signup_google.html');
+        // Prima verifica se req.user esiste
+        if (!req.user) {
+            console.error("Errore: req.user non definito nel callback di Google");
+            return res.redirect('/login');
+        }
+
+        // Controlla la struttura dell'oggetto user e ottieni l'email in modo sicuro
+        let email = null;
+        let full_name = null;
+
+        if (req.user.emails && req.user.emails.length > 0) {
+            email = req.user.emails[0].value;
+        } else if (req.user.email) {
+            // Alcune implementazioni di Passport potrebbero avere l'email direttamente nell'oggetto user
+            email = req.user.email;
+        }
+
+        if (req.user.displayName) {
+            full_name = req.user.displayName;
+        } else if (req.user.name) {
+            full_name = req.user.name;
+        }
+
+        // Verifica che abbiamo ottenuto l'email
+        if (!email) {
+            console.error("Errore: impossibile ottenere l'email dell'utente Google");
+            return res.redirect('/login');
+        }
+
+        // Stampa l'oggetto user per debug
+        console.log("Oggetto user ricevuto da Google:", JSON.stringify(req.user, null, 2));
+
+        // Verifica se l'utente esiste già nel database
+        db.get(`SELECT * FROM USERS WHERE email = ?`, [email], (err, user) => {
+            if (err) {
+                console.error("Errore durante la ricerca dell'utente:", err.message);
+                return res.redirect('/login');
+            }
+
+            if (user) {
+                // L'utente esiste già, imposta la sessione e vai alla home
+                req.session.loggedIn = true;
+                req.session.user_id = user.user_id;
+                req.session.email = email;
+                req.session.full_name = user.full_name || full_name;
+                req.session.userType = user.userType;
+                req.session.role = user.role || 'user';
+                
+                req.session.save((err) => {
+                    if (err) {
+                        console.error("Errore nel salvare la sessione:", err);
+                    }
+                    res.redirect('/home');
+                });
+            } else {
+                // L'utente non esiste, memorizza i dati di base nella sessione
+                // e reindirizza alla pagina di registrazione
+                req.session.email = email;
+                req.session.full_name = full_name;
+                
+                req.session.save((err) => {
+                    if (err) {
+                        console.error("Errore nel salvare la sessione:", err);
+                    }
+                    res.redirect('/signup_google.html');
+                });
+            }
+        });
     }
 );
 
@@ -202,7 +271,7 @@ function ensureAuthenticated(req, res, next) {
  *         description: Errore nella richiesta.
  *       500:
  *         description: Errore interno del server.
- */  
+ */
 app.post('/signup', async (req, res) => {
     const { userType, full_name, email, password, instrument, experience, description, location, looking_for, genre } = req.body;
 
@@ -221,7 +290,7 @@ app.post('/signup', async (req, res) => {
         return res.status(400).json({ error: "Il campo userType deve essere 'musician' o 'band'" });
     }
 
-    
+
     // Verifica dei campi specifici in base al tipo di utente
     if (userType === "musician" && !instrument) {
         return res.status(400).json({ error: "Il campo instrument è obbligatorio per i musicisti" });
@@ -292,15 +361,12 @@ app.post('/signup', async (req, res) => {
 });
 
 app.post('/completa-profilo', async (req, res) => {
-    const { email, userType, instrument, skillLevel, description, location, lookingFor, genre } = req.body;
-
-    if (!userType || !location) {
-        return res.status(400).json({ error: "I campi userType e location sono obbligatori" });
-    }
+    const { email, full_name, userType, instrument, skillLevel, description, location, lookingFor, genre } = req.body;
 
     if (!email) {
         return res.status(400).json({ error: "Il campo email è obbligatorio" });
     }
+
     if (!userType || !location) {
         return res.status(400).json({ error: "I campi userType e location sono obbligatori" });
     }
@@ -313,112 +379,179 @@ app.post('/completa-profilo', async (req, res) => {
 
     try {
         // Controlla se l'utente esiste già nel database
-        db.get(`SELECT user_id FROM USERS WHERE email = ?`, [email], (err, row) => {
+        db.get(`SELECT * FROM USERS WHERE email = ?`, [email], (err, user) => {
             if (err) {
                 console.error("Errore durante la ricerca dell'utente:", err.message);
                 return res.status(500).json({ error: "Errore durante la ricerca dell'utente" });
             }
 
-            if (!row) {
-                return res.status(404).json({ error: "Utente non trovato" });
+            let userId;
+            let role = 'user'; // Default role
+
+            if (!user) {
+                // Utente non trovato, lo creiamo
+                db.run(
+                    `INSERT INTO USERS (full_name, email, userType, location, role) VALUES (?, ?, ?, ?, ?)`,
+                    [full_name, email, userType, location, role],
+                    function (err) {
+                        if (err) {
+                            console.error("Errore durante la creazione dell'utente:", err.message);
+                            return res.status(500).json({ error: "Errore durante la creazione dell'utente" });
+                        }
+
+                        userId = this.lastID;
+
+                        // Imposta i dati della sessione
+                        req.session.loggedIn = true;
+                        req.session.user_id = userId;
+                        req.session.email = email;
+                        req.session.full_name = full_name;
+                        req.session.userType = userType;
+                        req.session.role = role;
+
+                        proceedWithUserType(userId);
+                    }
+                );
+            } else {
+                // Utente trovato, aggiorniamo i dati
+                userId = user.user_id;
+                role = user.role || 'user';
+
+                db.run(
+                    `UPDATE USERS SET userType = ?, location = ? WHERE user_id = ?`,
+                    [userType, location, userId],
+                    (err) => {
+                        if (err) {
+                            console.error("Errore durante l'aggiornamento dell'utente:", err.message);
+                            return res.status(500).json({ error: "Errore durante l'aggiornamento dell'utente" });
+                        }
+
+                        // Imposta i dati della sessione
+                        req.session.loggedIn = true;
+                        req.session.user_id = userId;
+                        req.session.email = email;
+                        req.session.full_name = user.full_name || full_name;
+                        req.session.userType = userType;
+                        req.session.role = role;
+
+                        proceedWithUserType(userId);
+                    }
+                );
             }
 
-            const userId = row.user_id;
-
-            // Aggiorna i dati dell'utente nella tabella USERS
-            db.run(
-                `UPDATE USERS SET userType = ?, location = ? WHERE user_id = ?`,
-                [userType, location, userId],
-                (err) => {
-                    if (err) {
-                        console.error("Errore durante l'aggiornamento dell'utente:", err.message);
-                        return res.status(500).json({ error: "Errore durante l'aggiornamento dell'utente" });
-                    }
-
-                    if (userType === 'musician') {
-                        // Verifica se esiste già un record in MUSICIANS
-                        db.get(`SELECT musician_id FROM MUSICIANS WHERE user_id = ?`, [userId], (err, musician) => {
-                            if (err) {
-                                console.error("Errore durante il controllo del musicista:", err.message);
-                                return res.status(500).json({ error: "Errore durante il controllo del musicista" });
-                            }
-
-                            if (musician) {
-                                // Aggiorna il record in MUSICIANS
-                                db.run(
-                                    `UPDATE MUSICIANS SET instrument = ?, experience = ?, description = ? WHERE user_id = ?`,
-                                    [instrument, skillLevel, description, userId],
-                                    (err) => {
-                                        if (err) {
-                                            console.error("Errore durante l'aggiornamento del musicista:", err.message);
-                                            return res.status(500).json({ error: "Errore durante l'aggiornamento del musicista" });
-                                        }
-                                        res.json({ message: 'Registrazione completata come musicista' });
-                                        console.log('Registrazione completata come musicista');
-                                    }
-                                );
-                            } else {
-                                // Crea un nuovo record in MUSICIANS
-                                db.run(
-                                    `INSERT INTO MUSICIANS (user_id, instrument, experience, description) VALUES (?, ?, ?, ?)`,
-                                    [userId, instrument, skillLevel, description],
-                                    (err) => {
-                                        if (err) {
-                                            console.error("Errore durante la creazione del musicista:", err.message);
-                                            return res.status(500).json({ error: "Errore durante la creazione del musicista" });
-                                        }
-                                        res.json({ message: 'Registrazione completata come musicista' });
-                                        console.log('Registrazione completata come musicista');
-                                    }
-                                );
-                            }
-                        });
-                    } else if (userType === 'band') {
-                        // Verifica se esiste già un record in BANDS
-                        db.get(`SELECT band_id FROM BANDS WHERE user_id = ?`, [userId], (err, band) => {
-                            if (err) {
-                                console.error("Errore durante il controllo della band:", err.message);
-                                return res.status(500).json({ error: "Errore durante il controllo della band" });
-                            }
-
-                            if (band) {
-                                // Aggiorna il record in BANDS
-                                db.run(
-                                    `UPDATE BANDS SET description = ?, looking_for = ?, genre = ? WHERE user_id = ?`,
-                                    [description, lookingFor, genre, userId],
-                                    (err) => {
-                                        if (err) {
-                                            console.error("Errore durante l'aggiornamento della band:", err.message);
-                                            return res.status(500).json({ error: "Errore durante l'aggiornamento della band" });
-                                        }
-                                        res.json({ message: 'Registrazione completata come band' });
-                                    }
-                                );
-                            } else {
-                                // Crea un nuovo record in BANDS
-                                db.run(
-                                    `INSERT INTO BANDS (user_id, description, looking_for, genre) VALUES (?, ?, ?, ?)`,
-                                    [userId, description, lookingFor, genre],
-                                    (err) => {
-                                        if (err) {
-                                            console.error("Errore durante la creazione della band:", err.message);
-                                            return res.status(500).json({ error: "Errore durante la creazione della band" });
-                                        }
-                                        res.json({ message: 'Registrazione completata come band' });
-                                    }
-                                );
-                            }
-                        });
-                    }
+            function proceedWithUserType(userId) {
+                if (userType === 'musician') {
+                    handleMusician(userId);
+                } else if (userType === 'band') {
+                    handleBand(userId);
                 }
-            );
+            }
+
+            function handleMusician(userId) {
+                // Verifica se esiste già un record in MUSICIANS
+                db.get(`SELECT musician_id FROM MUSICIANS WHERE user_id = ?`, [userId], (err, musician) => {
+                    if (err) {
+                        console.error("Errore durante il controllo del musicista:", err.message);
+                        return res.status(500).json({ error: "Errore durante il controllo del musicista" });
+                    }
+
+                    if (musician) {
+                        // Aggiorna il record in MUSICIANS
+                        db.run(
+                            `UPDATE MUSICIANS SET instrument = ?, experience = ?, description = ? WHERE user_id = ?`,
+                            [instrument, skillLevel, description, userId],
+                            (err) => {
+                                if (err) {
+                                    console.error("Errore durante l'aggiornamento del musicista:", err.message);
+                                    return res.status(500).json({ error: "Errore durante l'aggiornamento del musicista" });
+                                }
+                                // Salva la sessione e invia la risposta
+                                req.session.save((err) => {
+                                    if (err) {
+                                        console.error("Errore nel salvare la sessione:", err);
+                                    }
+                                    res.json({ message: 'Registrazione completata come musicista', redirect: '/home' });
+                                });
+                            }
+                        );
+                    } else {
+                        // Crea un nuovo record in MUSICIANS
+                        db.run(
+                            `INSERT INTO MUSICIANS (user_id, instrument, experience, description) VALUES (?, ?, ?, ?)`,
+                            [userId, instrument, skillLevel, description],
+                            (err) => {
+                                if (err) {
+                                    console.error("Errore durante la creazione del musicista:", err.message);
+                                    return res.status(500).json({ error: "Errore durante la creazione del musicista" });
+                                }
+                                // Salva la sessione e invia la risposta
+                                req.session.save((err) => {
+                                    if (err) {
+                                        console.error("Errore nel salvare la sessione:", err);
+                                    }
+                                    res.json({ message: 'Registrazione completata come musicista', redirect: '/home' });
+                                });
+                            }
+                        );
+                    }
+                });
+            }
+
+            function handleBand(userId) {
+                // Verifica se esiste già un record in BANDS
+                db.get(`SELECT band_id FROM BANDS WHERE user_id = ?`, [userId], (err, band) => {
+                    if (err) {
+                        console.error("Errore durante il controllo della band:", err.message);
+                        return res.status(500).json({ error: "Errore durante il controllo della band" });
+                    }
+
+                    if (band) {
+                        // Aggiorna il record in BANDS
+                        db.run(
+                            `UPDATE BANDS SET description = ?, looking_for = ?, genre = ? WHERE user_id = ?`,
+                            [description, lookingFor, genre, userId],
+                            (err) => {
+                                if (err) {
+                                    console.error("Errore durante l'aggiornamento della band:", err.message);
+                                    return res.status(500).json({ error: "Errore durante l'aggiornamento della band" });
+                                }
+                                // Salva la sessione e invia la risposta
+                                req.session.save((err) => {
+                                    if (err) {
+                                        console.error("Errore nel salvare la sessione:", err);
+                                    }
+                                    res.json({ message: 'Registrazione completata come band', redirect: '/home' });
+                                });
+                            }
+                        );
+                    } else {
+                        // Crea un nuovo record in BANDS
+                        db.run(
+                            `INSERT INTO BANDS (user_id, description, looking_for, genre) VALUES (?, ?, ?, ?)`,
+                            [userId, description, lookingFor, genre],
+                            (err) => {
+                                if (err) {
+                                    console.error("Errore durante la creazione della band:", err.message);
+                                    return res.status(500).json({ error: "Errore durante la creazione della band" });
+                                }
+                                // Salva la sessione e invia la risposta
+                                req.session.save((err) => {
+                                    if (err) {
+                                        console.error("Errore nel salvare la sessione:", err);
+                                    }
+                                    res.json({ message: 'Registrazione completata come band', redirect: '/home' });
+                                });
+                            }
+                        );
+                    }
+                });
+            }
         });
     } catch (error) {
         console.error("Errore interno del server:", error.message);
         res.status(500).json({ error: "Errore interno del server" });
     }
 });
-
 
 /**
  * @swagger
@@ -1006,7 +1139,7 @@ app.delete('/admin/delete-user/:id', isAdmin, (req, res) => {
         });
     });
 });
-    
+
 
 //----------------------------------------------------------------------------------| CHAT |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //endpoint get per visualizzare la chat
@@ -1026,10 +1159,10 @@ app.get('/users/list', (req, res) => {
     if (!req.session.userId) {
         return res.status(401).send('Non autorizzato');
     }
-    
+
     // Recupera tutti gli utenti tranne l'utente corrente
-    db.all('SELECT user_id, full_name, email FROM USERS WHERE user_id != ?', 
-        [req.session.userId], 
+    db.all('SELECT user_id, full_name, email FROM USERS WHERE user_id != ?',
+        [req.session.userId],
         (err, rows) => {
             if (err) {
                 return res.status(500).send('Errore nel recupero utenti');
