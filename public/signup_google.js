@@ -1,3 +1,5 @@
+//const { use } = require("passport");
+
 let userData = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -26,11 +28,24 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
+        const userType = document.getElementById('userType').value;
+        const instrument = userType === 'musician' ? document.getElementById('instrument').value : '';
+        const skillLevel = userType === 'musician' ? document.getElementById('skillLevel').value : '';
+        const lookingFor = userType === 'band' ? document.getElementById('lookingFor').value : ''; // Corretto
+        const genre = userType === 'band' ? document.getElementById('genre').value : '';
+
+        // Oggetto con i dati da inviare al server
+
         const data = {
             email: userData.email,
             full_name: userData.name,
             description: document.getElementById("description").value,
-            location: document.getElementById("location").value
+            location: document.getElementById("location").value, // Added missing comma
+            userType: userType,
+            instrument: instrument,
+            skillLevel: skillLevel,
+            lookingFor: lookingFor,
+            genre: genre
         };
 
         console.log('Dati inviati:', data);

@@ -309,6 +309,8 @@ app.post('/completa-profilo', async (req, res) => {
         return res.status(400).json({ error: "Il campo userType deve essere 'musician' o 'band'" });
     }
 
+    console.log('Dati ricevuti:', req.body);
+
     try {
         // Controlla se l'utente esiste già nel database
         db.get(`SELECT user_id FROM USERS WHERE email = ?`, [email], (err, row) => {
@@ -321,7 +323,7 @@ app.post('/completa-profilo', async (req, res) => {
                 return res.status(404).json({ error: "Utente non trovato" });
             }
 
-            const userId = row.id;
+            const userId = row.user_id;
 
             // Aggiorna i dati dell'utente nella tabella USERS
             db.run(
@@ -352,6 +354,7 @@ app.post('/completa-profilo', async (req, res) => {
                                             return res.status(500).json({ error: "Errore durante l'aggiornamento del musicista" });
                                         }
                                         res.json({ message: 'Registrazione completata come musicista' });
+                                        console.log('Registrazione completata come musicista');
                                     }
                                 );
                             } else {
@@ -365,6 +368,7 @@ app.post('/completa-profilo', async (req, res) => {
                                             return res.status(500).json({ error: "Errore durante la creazione del musicista" });
                                         }
                                         res.json({ message: 'Registrazione completata come musicista' });
+                                        console.log('Registrazione completata come musicista');
                                     }
                                 );
                             }
