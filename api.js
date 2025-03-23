@@ -14,10 +14,12 @@ const swaggerUi = require('swagger-ui-express');
 const router = express.Router();
 require('dotenv').config();
 const passport = require('passport');
+const socketIo = require('socket.io');
 const http = require('http');
 const WebSocket = require('ws');
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const io = socketIo(server);
+
 
 app.use(session({
     secret: 'tuoSegretoSuperSicuro',
@@ -1222,67 +1224,24 @@ app.post('/chat/start', async (req, res) => {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //WEB SOCKET CONTATORE
+let onlineUsers = 0;
 
-let visitatoriAttivi = 0;
-
-// Set per tenere traccia delle connessioni attive
-const connessioniAttive = new Set();
-
-// Gestione delle connessioni WebSocket
-wss.on('connection', function(ws) {
-  // Assegna un ID univoco alla connessione
-  ws.id = Date.now() + Math.random().toString(36).substr(2, 5);
-  console.log('Nuova connessione WebSocket:', ws.id);
-  
-  // Aggiungi immediatamente la connessione al set
-  connessioniAttive.add(ws.id);
-  visitatoriAttivi = connessioniAttive.size;
-  console.log('Utente connesso. Visitatori attivi:', visitatoriAttivi);
-  broadcastVisitatori();
-  
-  // Gestione dei messaggi dal client
-  ws.on('message', function(message) {
-    try {
-      const data = JSON.parse(message.toString());
-      console.log('Messaggio ricevuto:', data);
-      
-      if (data.tipo === 'disconnessione') {
-        // Gestione esplicita della disconnessione
-        connessioniAttive.delete(ws.id);
-        visitatoriAttivi = connessioniAttive.size;
-        console.log('Utente disconnesso. Visitatori attivi:', visitatoriAttivi);
-        broadcastVisitatori();
-      }
-    } catch (e) {
-      console.error('Errore nel parsing del messaggio:', e);
-    }
-  });
-  
-  // Gestione della disconnessione
-  ws.on('close', function() {
-    // Rimuovi la connessione dal set
-    connessioniAttive.delete(ws.id);
-    visitatoriAttivi = connessioniAttive.size;
-    console.log('Connessione chiusa. Visitatori attivi:', visitatoriAttivi);
-    broadcastVisitatori();
-  });
+// Gestione WebSocket
+io.on('connection', (socket) => {
+    // Incrementa contatore quando un utente si connette
+    onlineUsers++;
+    // Invia aggiornamento a tutti i client
+    io.emit('userCount', onlineUsers);
+    
+    console.log('Nuovo utente connesso. Utenti online:', onlineUsers);
+    
+    // Quando un utente si disconnette
+    socket.on('disconnect', () => {
+        onlineUsers--;
+        io.emit('userCount', onlineUsers);
+        console.log('Utente disconnesso. Utenti online:', onlineUsers);
+    });
 });
-
-// Funzione per inviare l'aggiornamento a tutti i client
-function broadcastVisitatori() {
-  const data = JSON.stringify({
-    tipo: 'aggiornamento-visitatori',
-    numeroVisitatori: visitatoriAttivi
-  });
-  
-  console.log('Invio aggiornamento a tutti i client:', data);
-  
-  wss.clients.forEach(function(client) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(data);
-    }
-  });
-}
 
 
 

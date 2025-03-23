@@ -112,6 +112,11 @@
         footer a:hover {
             text-decoration: none;
         }
+        .online-counter {
+            background-color: #4CAF50;
+            padding: 5px 10px;
+            border-radius: 15px;
+        }
     </style>
 </head>
 
@@ -138,11 +143,8 @@
                     <li class="nav-item">
                         <a class="nav-link" href="logout">Logout</a>
                     </li>
-                    <li class="nav-item">
-                        <span class="navbar-text ms-3 badge bg-primary">
-                            <span id="contatore-visitatori">0</span>
-                            <span id="testo-visitatori">visitatori</span> online
-                        </span>
+                    <li class="online-counter">
+                        <span id="visitor-counter">0</span> utenti online
                     </li>
                 </ul>
             </div>
