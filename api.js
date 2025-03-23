@@ -1250,6 +1250,6 @@ io.on('connection', (socket) => {
 module.exports = app;
 app.use(express.static('public'));
 // Avvio del server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log(`Server in ascolto sulla porta ${port}: ${"http://localhost:" + port}`);
 });
