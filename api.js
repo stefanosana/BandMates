@@ -41,7 +41,7 @@ app.use(session({
 
 //const mock = require('./DBMock.js');
 //const db = new mock();
-const port = 3001;
+const port = 3000;
 app.set('view engine', 'hbs')
 
 //app.use(cors(corsOptions));
