@@ -246,10 +246,6 @@ Per facilitare il deployment e l'esecuzione dell'applicazione **BandMates**, ven
 - Assicurati che **Docker** e **Docker Compose** siano installati sul tuo sistema.  
 - Verifica che la versione di **Node.js** specificata nel Dockerfile (`22.13.1`) sia compatibile con il tuo ambiente.
 
-## Variabili d'Ambiente
-
-- L'applicazione richiede un file `.env` situato nella directory radice. Questo file deve contenere le variabili d'ambiente necessarie per il corretto funzionamento dell'applicazione.
-
 ## Istruzioni per Build ed Esecuzione
 
 1. Esegui il build delle immagini Docker e avvia i servizi:
