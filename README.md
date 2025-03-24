@@ -237,37 +237,38 @@
 
 
 
-# 🐳 Running the Project with Docker
+# 🐳 Eseguire il Progetto con Docker
 
-To facilitate the deployment and execution of the BandMates application, Docker and Docker Compose are utilized. Follow the steps below to set up and run the project:
+Per facilitare il deployment e l'esecuzione dell'applicazione **BandMates**, vengono utilizzati **Docker** e **Docker Compose**. Segui i passaggi riportati di seguito per configurare ed eseguire il progetto:
 
-## Prerequisites
+## Prerequisiti
 
-- Ensure Docker and Docker Compose are installed on your system.
-- Verify the Node.js version specified in the Dockerfile (`22.13.1`) is compatible with your environment.
+- Assicurati che **Docker** e **Docker Compose** siano installati sul tuo sistema.  
+- Verifica che la versione di **Node.js** specificata nel Dockerfile (`22.13.1`) sia compatibile con il tuo ambiente.
 
-## Environment Variables
+## Variabili d'Ambiente
 
-- The application requires an `.env` file located in the root directory. This file should contain the necessary environment variables for the application to function correctly.
+- L'applicazione richiede un file `.env` situato nella directory radice. Questo file deve contenere le variabili d'ambiente necessarie per il corretto funzionamento dell'applicazione.
 
-## Build and Run Instructions
+## Istruzioni per Build ed Esecuzione
 
-1. Build the Docker images and start the services:
+1. Esegui il build delle immagini Docker e avvia i servizi:
 
    ```bash
    docker-compose up --build
    ```
 
-2. Access the application at `http://localhost:3000`.
+2. Accedi all'applicazione tramite il browser all'indirizzo:  
+   👉 `http://localhost:3000`
 
-## Services and Ports
+## Servizi e Porte
 
-- **Application Service**: Exposed on port `3000`.
-- **Database Service**: SQLite database managed internally.
+- **Servizio Applicazione**: esposto sulla porta `3000`.  
+- **Servizio Database**: database **SQLite** gestito internamente.
 
-## Notes
+## Note
 
-- The `db_data` volume is used to persist database data.
-- The application is configured to restart automatically unless stopped manually.
+- Il volume `db_data` viene utilizzato per mantenere persistenti i dati del database.  
+- L'applicazione è configurata per riavviarsi automaticamente a meno che non venga arrestata manualmente.
 
-For further details, refer to the Dockerfile and `docker-compose.yml` provided in the project repository.
+Per ulteriori dettagli, fai riferimento al **Dockerfile** e al file **`docker-compose.yml`** inclusi nella repository del progetto.
