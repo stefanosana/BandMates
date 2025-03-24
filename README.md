@@ -255,7 +255,7 @@ Per facilitare il deployment e l'esecuzione dell'applicazione **BandMates**, ven
 1. Esegui il build delle immagini Docker e avvia i servizi:
 
    ```bash
-   docker-compose up --build
+   docker run -p 3000:3000 bandmates
    ```
 
 2. Accedi all'applicazione tramite il browser all'indirizzo:  
@@ -265,10 +265,3 @@ Per facilitare il deployment e l'esecuzione dell'applicazione **BandMates**, ven
 
 - **Servizio Applicazione**: esposto sulla porta `3000`.  
 - **Servizio Database**: database **SQLite** gestito internamente.
-
-## Note
-
-- Il volume `db_data` viene utilizzato per mantenere persistenti i dati del database.  
-- L'applicazione è configurata per riavviarsi automaticamente a meno che non venga arrestata manualmente.
-
-Per ulteriori dettagli, fai riferimento al **Dockerfile** e al file **`docker-compose.yml`** inclusi nella repository del progetto.
