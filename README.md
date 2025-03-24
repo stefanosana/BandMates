@@ -1,238 +1,34 @@
-# 🎶 BandMates 🎶
+# 🐳 Running the Project with Docker
 
----
+To facilitate the deployment and execution of the BandMates application, Docker and Docker Compose are utilized. Follow the steps below to set up and run the project:
 
-## 📜 Presentazione della piattaforma
-**Titolo**: BandMates  
-**Descrizione**:  
-BandMates è la piattaforma ideale per musicisti e band alla ricerca di nuove collaborazioni. Se sei un musicista in cerca di una band o una band in cerca di nuovi membri, BandMates ti aiuta a trovare la soluzione giusta. Grazie a funzionalità dedicate per mettere in contatto musicisti e band, potrai facilmente organizzare sessioni di prova, jam session o collaborazioni future, tutto dalla piattaforma.
+## Prerequisites
 
-> "Trova la tua band, crea la tua musica – Unisciti a chi condivide la tua passione!"
+- Ensure Docker and Docker Compose are installed on your system.
+- Verify the Node.js version specified in the Dockerfile (`22.13.1`) is compatible with your environment.
 
-**Target**: Band e Musicisti  
-**Problema**: Mancanza di gente con cui suonare  
-**Competitor**: Villaggio Musicale, Musiqua, Mercatino Musicale, Showgroup  
-**Tecnologie**: Git, Html, Css, Js, Express, Http, Web Socket 
-**Repository GitHub**: [BandMates Repository](https://github.com/stefanosana/BandMates.git)  
-**Timestamp**: 1726737714  
+## Environment Variables
 
----
+- The application requires an `.env` file located in the root directory. This file should contain the necessary environment variables for the application to function correctly.
 
-## 📩 Risposte HTTP in formato JSON
+## Build and Run Instructions
 
-### Login riuscito
-```json
-{
-  "status": 200,
-  "message": "Login avvenuto con successo",
-  "data": {
-    "user_id": "12345",
-    "username": "music_lover",
-    "email": "music_lover@example.com",
-    "token": "abcd1234efgh5678ijkl9012mnop3456",
-    "expires_in": 3600
-  }
-}
-```
+1. Build the Docker images and start the services:
 
-### Ricerca Riuscita
-```json
-{
-  "status": 200,
-  "message": "Ricerca avvenuta con successo",
-  "data": {
-    "results": [
-      {
-        "user_id": "56789",
-        "username": "guitar_master",
-        "location": "Milano, Italia",
-        "genre": "Rock",
-        "instruments": ["Chitarra"],
-        "experience_years": 5,
-        "availability": "Sera",
-        "profile_url": "/users/56789"
-      },
-      {
-        "user_id": "98765",
-        "username": "drum_hero",
-        "location": "Milano, Italia",
-        "genre": "Jazz",
-        "instruments": ["Batteria"],
-        "experience_years": 10,
-        "availability": "Weekend",
-        "profile_url": "/users/98765"
-      }
-    ],
-    "total_results": 2,
-    "saved_search": {
-      "search_id": "abc123",
-      "name": "Musicisti Rock a Milano",
-      "alerts_enabled": true,
-      "alert_frequency": "giornaliera"
-    }
-  }
-}
+   ```bash
+   docker-compose up --build
+   ```
 
-```
+2. Access the application at `http://localhost:3000`.
 
-### Messaggio inviato con successo (Chat singola)
-```json
-{
-  "status": 200,
-  "message": "Messaggio inviato con successo",
-  "data": {
-    "message_id": "msg_001",
-    "sender_id": "12345",
-    "recipient_id": "56789",
-    "chat_type": "singola",  
-    "content": {
-      "text": "Ehi, ascolta questo nuovo riff!",
-      "media": {
-        "file_type": "audio",
-        "file_url": "/media/demo_riff.mp3"
-      }
-    },
-    "timestamp": "2024-09-27T12:34:56Z",
-    "notifications": {
-      "status": "consegnato",
-      "notified_users": ["56789"]
-    }
-  }
-}
-```
+## Services and Ports
 
-### Messaggio inviato con successo (Chat di gruppo)
-```json
-{
-  "status": 200,
-  "message": "Messaggio inviato con successo",
-  "data": {
-    "message_id": "msg_002",
-    "sender_id": "12345",
-    "recipient_ids": ["56789", "98765", "65432"],
-    "chat_type": "gruppo",
-    "group_name": "Discussione Band Rock",
-    "content": {
-      "text": "Vediamoci per le prove domani!",
-      "media": null
-    },
-    "timestamp": "2024-09-27T14:45:12Z",
-    "notifications": {
-      "status": "consegnato",
-      "notified_users": ["56789", "98765", "65432"]
-    }
-  }
-}
+- **Application Service**: Exposed on port `3000`.
+- **Database Service**: SQLite database managed internally.
 
-```
+## Notes
 
-### Invio di media riuscito
-```json
-{
-  "status": 200,
-  "message": "Media inviato con successo",
-  "data": {
-    "message_id": "msg_003",
-    "sender_id": "12345",
-    "recipient_id": "56789",
-    "chat_type": "singola",
-    "content": {
-      "text": null,
-      "media": {
-        "file_type": "audio",
-        "file_name": "nuova_demo_canzone.mp3",
-        "file_url": "/media/nuova_demo_canzone.mp3"
-      }
-    },
-    "timestamp": "2024-09-27T16:12:34Z",
-    "notifications": {
-      "status": "consegnato",
-      "notified_users": ["56789"]
-    }
-  }
-}
+- The `db_data` volume is used to persist database data.
+- The application is configured to restart automatically unless stopped manually.
 
-```
-
-### Feedback inviato con successo
-```json
-{
-  "status": 200,
-  "message": "Feedback inviato con successo",
-  "data": {
-    "feedback_id": "fb_001",
-    "utente_id": "12345",
-    "tipo_feedback": "richiesta_funzione",
-    "descrizione": "Sarebbe utile poter filtrare i musicisti anche per età.",
-    "timestamp": "2024-09-27T12:45:00Z",
-    "stato_feedback": "in revisione",
-    "valutazione_esperienza": {
-      "punteggio": 5,
-      "commento": "Esperienza molto positiva, app intuitiva e facile da usare!"
-    },
-    "aggiornamenti": {
-      "ultimo_aggiornamento": "2024-09-28T10:30:00Z",
-      "dettagli_aggiornamento": "La tua richiesta è stata presa in considerazione per un futuro aggiornamento."
-    }
-  }
-}
-```
-
-## 📌 Raccolta dei Requisiti
-
-### Requisiti Funzionali
-
-- **Funzionalità di Messaggistica**:
-  - Supporto per chat singole e di gruppo.
-
-- **Avere dei criteri di ricerca**:
-  - Ricerca per località geografica.
-  - Filtri per genere musicale, strumenti suonati, anni di esperienza e disponibilità oraria.
-  - Opzione per salvare ricerche preferite.
-
-- **Funzionalità di Login/Register**:
-  - Registrazione e login tramite email e password.
-  - Gestione profilo.
-
-- **Implementare il Feedback e Supporto**:
-  - Sistema di feedback per segnalare bug, richiedere nuove funzionalità o assistenza.
- 
-- **Postare annunci di ricerca musicista**:
-  - Le band possono postare degli annunci in cui chiedono che tipo di muscista serve, con che strumento...
-
-- **Dashboard per Admin**:
-  - Se si accede con un account admin si accede al pannello di controllo per amministratori.
-
----
-
-### Requisiti Non Funzionali
-
-- **Sicurezza e Privacy**:
-  - Protocollo HTTPS per garantire la sicurezza delle comunicazioni.
-  - Crittografia per protezione dei dati dell'utente.
-  - Politiche sulla privacy e termini di servizio chiari per la gestione dei dati.
-
-- **Responsive Design e Accessibilità**:
-  - Design responsive per supportare l'uso su dispositivi mobili e desktop.
-
-- **Integrazione con SQLite**:
-  - Per l'archiviazione dei dati.
-
-- **Conoscenza Linguaggi di Programmazione**:
-  - **HTML, CSS, BootStrap**: per il front-end responsive.
-  - **JavaScript**: per l’interattività e la gestione della messaggistica.
-  - **SQL**: per la gestione dei dati.
-  - **HandleBars**: Per implementare le sessioni.
-
----
-
-### Requisiti di Dominio
-
-- **Conoscenza Musicale**:
-  - Familiarità con la terminologia musicale (strumenti, generi, esperienza) per consentire una classificazione accurata di musicisti e band.
-
-
-## Casi D'Uso
-![UML](umlBandMates.png)
-
-
+For further details, refer to the Dockerfile and `docker-compose.yml` provided in the project repository.

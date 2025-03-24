@@ -1,0 +1,44 @@
+# Node.js dependencies
+node_modules/
+
+# Logs
+*.log
+
+# Environment files
+.env*
+
+# Git files
+.git/
+.gitignore
+
+# Temporary files
+*.tmp
+
+# Build outputs
+dist/
+build/
+
+# Documentation
+*.md
+README*
+
+# IDE files
+.idea/
+.vscode/
+
+# Database files
+*.db
+
+# Public files
+public/css/style.css
+
+# Views
+views/admin/
+views/areapersonale.hbs
+views/chat.hbs
+views/error.hbs
+views/home.hbs
+
+# Miscellaneous
+.DS_Store
+Thumbs.db
