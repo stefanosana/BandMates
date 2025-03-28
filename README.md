@@ -239,25 +239,6 @@
 
 # 🐳 Eseguire il Progetto con Docker
 
-Per facilitare il deployment e l'esecuzione dell'applicazione **BandMates**, vengono utilizzati **Docker** e **Docker Compose**. Segui i passaggi riportati di seguito per configurare ed eseguire il progetto:
-
-## Prerequisiti
-
-- Assicurati che **Docker** e **Docker Compose** siano installati sul tuo sistema.  
-- Verifica che la versione di **Node.js** specificata nel Dockerfile (`22.13.1`) sia compatibile con il tuo ambiente.
-
-## Istruzioni per Build ed Esecuzione
-
-1. Esegui il build delle immagini Docker e avvia i servizi:
-
-   ```bash
-   docker run -p 3000:3000 bandmates
-   ```
-
-2. Accedi all'applicazione tramite il browser all'indirizzo:  
-   👉 `http://localhost:3000`
-
-## Servizi e Porte
-
-- **Servizio Applicazione**: esposto sulla porta `3000`.  
-- **Servizio Database**: database **SQLite** gestito internamente.
+Per facilitare il deployment e l'esecuzione dell'applicazione **BandMates**, vengono utilizzati **Docker** e **Docker Compose**. 
+Segui il seguente link:
+https://hub.docker.com/repository/docker/stefanosana/bandmates/
