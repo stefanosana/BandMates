@@ -182,7 +182,7 @@ app.get('/auth/google/callback',
                 req.session.full_name = user.full_name || full_name;
                 req.session.userType = user.userType;
                 req.session.role = user.role || 'user';
-                
+
                 req.session.save((err) => {
                     if (err) {
                         console.error("Errore nel salvare la sessione:", err);
@@ -194,7 +194,7 @@ app.get('/auth/google/callback',
                 // e reindirizza alla pagina di registrazione
                 req.session.email = email;
                 req.session.full_name = full_name;
-                
+
                 req.session.save((err) => {
                     if (err) {
                         console.error("Errore nel salvare la sessione:", err);
@@ -1146,6 +1146,8 @@ app.delete('/admin/delete-user/:id', isAdmin, (req, res) => {
 });
 
 
+
+
 //----------------------------------------------------------------------------------| CHAT |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //endpoint get per visualizzare la chat
 app.get('/chat', (req, res) => {
@@ -1232,9 +1234,9 @@ io.on('connection', (socket) => {
     onlineUsers++;
     // Invia aggiornamento a tutti i client
     io.emit('userCount', onlineUsers);
-    
+
     console.log('Nuovo utente connesso. Utenti online:', onlineUsers);
-    
+
     // Quando un utente si disconnette
     socket.on('disconnect', () => {
         onlineUsers--;
@@ -1243,6 +1245,17 @@ io.on('connection', (socket) => {
     });
 });
 
+//------------------------------------------------------------------------| API Terze Parti |------------------------------------------------------------------------------------------
+app.get('/marketplace', (req, res) => {
+    if (!req.session.loggedIn) {
+        return res.redirect('/login');
+    }
+    res.render('marketplace', {
+        full_name: req.session.full_name,
+        userType: req.session.userType,
+        role: req.session.role,
+    });
+});
 
 
 

@@ -193,48 +193,85 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Ottieni la posizione dell'utente
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(loadInstruments, handleLocationError);
-            } else {
-                alert("La geolocalizzazione non è supportata dal tuo browser");
-            }
+            // Inserisci qui il tuo token personale per l'API di Reverb
+            const PERSONAL_TOKEN = '7154267134e2c03bb45d6485ad08b929bbeb7a813c6eb9231c8fac6331136631';
 
-            // Gestisci i cambiamenti nei filtri
-            document.getElementById('radius').addEventListener('change', updateResults);
-            document.getElementById('category').addEventListener('change', updateResults);
+            // Ottieni riferimenti agli elementi di filtro
+            const radiusSelect = document.getElementById('radius');
+            const categorySelect = document.getElementById('category');
 
-            function loadInstruments(position) {
-                const latitude = position.coords.latitude;
-                const longitude = position.coords.longitude;
-                const radius = document.getElementById('radius').value;
-                const category = document.getElementById('category').value;
+            // Aggiungi event listener per i filtri
+            radiusSelect.addEventListener('change', updateResults);
+            categorySelect.addEventListener('change', updateResults);
 
-                fetchInstruments(latitude, longitude, radius, category);
-            }
+            // Carica gli strumenti al caricamento della pagina
+            updateResults();
 
             function updateResults() {
-                // Ricarica i risultati quando i filtri cambiano
-                navigator.geolocation.getCurrentPosition(loadInstruments, handleLocationError);
+                const radius = radiusSelect.value;
+                const category = categorySelect.value;
+                fetchReverbListings(radius, category);
             }
 
-            function fetchInstruments(latitude, longitude, radius, category) {
+            function fetchReverbListings(radius, category) {
                 const container = document.getElementById('instruments-container');
-                container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border" role="status"><span class="sr-only">Caricamento...</span></div></div>';
 
-                let url = `/api/marketplace?latitude=${latitude}&longitude=${longitude}&radius=${radius}`;
+                // Mostra lo spinner di caricamento
+                container.innerHTML = `
+                    <div class="col-12 text-center">
+                        <div class="spinner-border" role="status" aria-live="polite">
+                            <span class="sr-only">Caricamento...</span>
+                        </div>
+                    </div>
+                `;
+
+                // Costruzione URL dell'API con i parametri di filtro
+                let url = `https://api.reverb.com/api/listings/all`;
+                
+                // Aggiungi parametri di query
+                const params = new URLSearchParams();
+                
                 if (category) {
-                    url += `&category=${category}`;
+                    params.append('product_type', category);
+                }
+                
+                // Aggiungi il parametro di raggio se specificato
+                if (radius) {
+                    params.append('distance', radius);
+                }
+                
+                // Aggiungi i parametri all'URL
+                if (params.toString()) {
+                    url += `?${params.toString()}`;
                 }
 
-                fetch(url)
-                    .then(response => response.json())
+                // Effettua la richiesta con i corretti header
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        "Content-Type": "application/hal+json",
+                        "Accept": "application/hal+json",
+                        "Accept-Version": "3.0",
+                        "Authorization": `Bearer ${PERSONAL_TOKEN}`
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Errore HTTP: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
-                        displayInstruments(data.data.listings);
+                        // Controlla se ci sono strumenti da visualizzare
+                        if (!data || !data.listings || data.listings.length === 0) {
+                            container.innerHTML = '<div class="col-12 text-center">Nessuno strumento trovato.</div>';
+                            return;
+                        }
+                        displayInstruments(data.listings);
                     })
                     .catch(error => {
-                        console.error('Errore:', error);
-                        container.innerHTML = '<div class="col-12 text-center">Si è verificato un errore nel caricamento degli strumenti.</div>';
+                        console.error('Errore nel fetch degli strumenti:', error);
+                        container.innerHTML = '<div class="col-12 text-center text-danger">Si è verificato un errore durante il caricamento degli strumenti. Riprova più tardi.</div>';
                     });
             }
 
@@ -250,26 +287,44 @@
                 instruments.forEach(instrument => {
                     const card = document.createElement('div');
                     card.className = 'col-md-4 mb-4';
+
+                    // Verifica la presenza di un'immagine e usa un fallback se non disponibile
+                    let imageUrl = '/img/no-image.jpg';
+                    
+                    if (instrument.photos && 
+                        instrument.photos.length > 0 && 
+                        instrument.photos[0]._links && 
+                        instrument.photos[0]._links.large_crop) {
+                        imageUrl = instrument.photos[0]._links.large_crop.href;
+                    }
+
+                    // Verifica la presenza del prezzo e della posizione
+                    const price = instrument.price && instrument.price.amount 
+                        ? `€${instrument.price.amount}` 
+                        : 'Prezzo non disponibile';
+                    
+                    const location = instrument.location || 'Posizione non specificata';
+                    
+                    // Verifica la presenza del link
+                    const link = instrument._links && instrument._links.web 
+                        ? instrument._links.web.href 
+                        : '#';
+
                     card.innerHTML = `
-          <div class="card h-100">
-            <img src="${instrument.photos[0]?._links.large_crop.href || '/img/no-image.jpg'}" class="card-img-top" alt="${instrument.title}">
-            <div class="card-body">
-              <h5 class="card-title">${instrument.title}</h5>
-              <p class="card-text">€${instrument.price.amount}</p>
-              <p class="card-text"><small>${instrument.location}</small></p>
-            </div>
-            <div class="card-footer">
-              <a href="${instrument._links.web.href}" target="_blank" class="btn btn-primary">Vedi su Reverb</a>
-            </div>
-          </div>
-        `;
+                        <div class="card h-100">
+                            <img src="${imageUrl}" class="card-img-top" alt="${instrument.title || 'Strumento musicale'}">
+                            <div class="card-body">
+                                <h5 class="card-title">${instrument.title || 'Titolo non disponibile'}</h5>
+                                <p class="card-text">${price}</p>
+                                <p class="card-text"><small>${location}</small></p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="${link}" target="_blank" class="btn btn-primary">Vedi su Reverb</a>
+                            </div>
+                        </div>
+                    `;
                     container.appendChild(card);
                 });
-            }
-
-            function handleLocationError(error) {
-                const container = document.getElementById('instruments-container');
-                container.innerHTML = `<div class="col-12 text-center">Impossibile determinare la tua posizione: ${error.message}</div>`;
             }
         });
     </script>
@@ -282,25 +337,5 @@
 
     <!-- Bootstrap JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../public/contatore_visitatori.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const toggleButton = document.getElementById('toggleAdvanced');
-            const advancedSearch = document.getElementById('advancedSearch');
-
-            toggleButton.addEventListener('click', function () {
-                if (advancedSearch.style.display === 'none' || advancedSearch.style.display === '') {
-                    advancedSearch.style.display = 'block';
-                    toggleButton.textContent = 'Nascondi Ricerca Avanzata';
-                } else {
-                    advancedSearch.style.display = 'none';
-                    toggleButton.textContent = 'Ricerca Avanzata';
-                }
-            });
-        });
-    </script>
-
-
 </body>
-
 </html>
