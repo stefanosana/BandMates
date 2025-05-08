@@ -20,6 +20,7 @@
     "handlebars": "^4.7.8",
     "hbs": "^4.2.0",
     "jsonwebtoken": "^9.0.2",
+    "just-handlebars-helpers": "^1.0.19",
     "node.js": "^0.0.1-security",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",

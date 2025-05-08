@@ -1,124 +1,210 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BandMates - Trova la tua Band o Musicista</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
     <style>
         body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #f5f7fa;
-            color: #333;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            color: #343a40;
         }
 
         .navbar-brand {
+            font-family: 'Montserrat', sans-serif;
             font-weight: 700;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
+            color: #007bff !important;
         }
 
         .navbar-nav .nav-link {
-            font-size: 1.1rem;
+            font-size: 1rem;
+            font-weight: 500;
         }
 
         .navbar {
             padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .search-section {
-            padding: 3rem 0;
-            background: linear-gradient(to right, #00c6ff, #0072ff);
+            padding: 4rem 0;
+            background: linear-gradient(135deg, #007bff, #00c6ff);
             color: white;
         }
 
         .search-container {
             background-color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .search-container h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: #343a40;
+            margin-bottom: 1.5rem;
         }
 
         .form-label {
-            font-weight: 600;
-            color: #333;
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 0.5rem;
         }
 
-        .btn-primary {
+        .form-control,
+        .form-select {
+            border-radius: 0.5rem;
+            border: 1px solid #ced4da;
+            padding: 0.75rem 1rem;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+        }
+
+        .btn-primary-custom {
             background-color: #ffc107;
             border: none;
-            color: #333;
+            color: #212529;
             font-weight: bold;
-            padding: 0.5rem 2rem;
+            padding: 0.75rem 2.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease;
         }
 
-        .btn-primary:hover {
+        .btn-primary-custom:hover {
             background-color: #e0a800;
+            transform: translateY(-2px);
         }
 
-        .btn-link {
+        .btn-secondary-custom {
+            background-color: #6c757d;
+            border: none;
+            color: white;
+            font-weight: bold;
+            padding: 0.75rem 2.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease;
+        }
+
+        .btn-secondary-custom:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-link-custom {
             color: #007bff;
             text-decoration: none;
+            font-weight: 500;
         }
 
-        .btn-link:hover {
+        .btn-link-custom:hover {
             text-decoration: underline;
+            color: #0056b3;
         }
 
-        .advanced-search {
-            display: none;
-            margin-top: 1rem;
+        .advanced-search-panel {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
         }
 
+        .advanced-search-panel h5 {
+            font-family: 'Montserrat', sans-serif;
+            color: #343a40;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .form-check-label {
+            color: #495057;
+        }
+
+        .form-check-input:checked {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .results-section,
         .recommended-section {
             padding: 3rem 0;
         }
 
+        .results-section h2,
+        .recommended-section h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: #343a40;
+        }
+
         .card {
             border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease-in-out;
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
         }
 
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-7px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
         }
 
         .card-img-top {
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
-            height: 200px;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            height: 220px;
             object-fit: cover;
+        }
+
+        .card-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
         }
 
         footer {
             background-color: #343a40;
             color: white;
-            padding: 1.5rem 0;
+            padding: 2rem 0;
             text-align: center;
         }
 
         footer a {
             color: #ffc107;
+            font-weight: 500;
         }
 
         footer a:hover {
-            text-decoration: none;
+            text-decoration: underline;
+            color: #fff;
         }
     </style>
 </head>
+
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
             <a class="navbar-brand" href="index.html">BandMates</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
@@ -141,125 +227,127 @@
     <section class="search-section">
         <div class="container">
             <div class="search-container">
-                <h1 style="color: #000000;" class="text-center mb-4">Trova Musicisti e Band</h1>
-                <form action="/search" method="GET" id="searchForm">
+                <h1 class="text-center mb-4">Trova Musicisti e Band</h1>
+                <form id="searchFormMain">
                     <div class="mb-3">
-                        <input type="text" class="form-control form-control-lg" id="searchQuery" name="query" placeholder="Cerca musicisti, band, generi..." required>
+                        <input type="text" class="form-control form-control-lg" id="searchQueryMain" name="query"
+                            placeholder="Cerca per nome, genere, strumento...">
                     </div>
                     <div class="text-center mb-3">
-                        <button type="submit" class="btn btn-primary btn-lg">Cerca</button>
+                        <button type="button" class="btn btn-primary-custom btn-lg" id="searchButtonMain">Cerca</button>
                     </div>
                     <div class="text-center">
-                        <button type="button" class="btn btn-link" id="toggleAdvanced">Ricerca Avanzata</button>
+                        <button type="button" class="btn btn-link-custom" id="toggleAdvanced">Mostra Ricerca
+                            Avanzata</button>
                     </div>
-                    <div class="advanced-search" id="advancedSearch" style="display: none;">
+                </form>
+
+                <!-- Pannello Ricerca Avanzata -->
+                <div class="advanced-search-panel" id="advancedSearchPanel" style="display: none;">
+                    <h5 class="text-center">Ricerca Avanzata</h5>
+                    <form id="advancedSearchForm">
                         <div class="mb-3">
                             <label class="form-label">Tipo di ricerca:</label>
-                            <div class="form-check">
-                                <input style="color: #000000;" class="form-check-input" type="radio" name="searchType" id="searchTypeBand" value="band" checked>
-                                <label style="color: #000000;" class="form-check-label" for="searchTypeBand">
-                                    Band
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input style="color: #000000;" class="form-check-input" type="radio" name="searchType" id="searchTypeMusician" value="musician">
-                                <label style="color: #000000;" class="form-check-label" for="searchTypeMusician">
-                                    Musicista
-                                </label>
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="searchTypeAdvanced"
+                                        id="searchTypeBandAdvanced" value="band" checked>
+                                    <label class="form-check-label" for="searchTypeBandAdvanced">Band</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="searchTypeAdvanced"
+                                        id="searchTypeMusicianAdvanced" value="musician">
+                                    <label class="form-check-label" for="searchTypeMusicianAdvanced">Musicista</label>
+                                </div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="location" class="form-label">Località</label>
-                                <input type="text" class="form-control" id="location" name="location" placeholder="Es. Milano, Italia">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="locationAdvanced" class="form-label">Località</label>
+                                <input type="text" class="form-control" id="locationAdvanced" name="location"
+                                    placeholder="Es. Milano, Italia">
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="genre" class="form-label">Genere Musicale</label>
-                                <select class="form-select" id="genre" name="genre">
-                                    <option value="">Seleziona un genere</option>
+                            <div class="col-md-6" id="genreField">
+                                <label for="genreAdvanced" class="form-label">Genere Musicale</label>
+                                <select class="form-select" id="genreAdvanced" name="genre">
+                                    <option value="" selected>Qualsiasi genere</option>
                                     <option value="rock">Rock</option>
                                     <option value="jazz">Jazz</option>
                                     <option value="pop">Pop</option>
                                     <option value="classica">Classica</option>
                                     <option value="elettronica">Elettronica</option>
+                                    <option value="metal">Metal</option>
+                                    <option value="blues">Blues</option>
+                                    <option value="funk">Funk</option>
+                                    <option value="reggae">Reggae</option>
+                                    <option value="country">Country</option>
+                                    <option value="hiphop">Hip Hop</option>
+                                    <option value="altro">Altro</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="instrument" class="form-label">Strumento</label>
-                                <select class="form-select" id="instrument" name="instrument">
-                                    <option value="">Seleziona uno strumento</option>
-                                    <option value="chitarra">Chitarra</option>
-                                    <option value="batteria">Batteria</option>
-                                    <option value="basso">Basso</option>
-                                    <option value="voce">Voce</option>
-                                    <option value="tastiera">Tastiera</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="experience" class="form-label">Anni di Esperienza</label>
-                                <input type="number" class="form-control" id="experience" name="experience" min="0" max="50" placeholder="Es. 5">
+
+                        <div id="musicianFieldsContainer">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="instrumentAdvanced" class="form-label">Strumento</label>
+                                    <select class="form-select" id="instrumentAdvanced" name="instrument">
+                                        <option value="" selected>Qualsiasi strumento</option>
+                                        <option value="chitarra">Chitarra</option>
+                                        <option value="batteria">Batteria</option>
+                                        <option value="basso">Basso</option>
+                                        <option value="voce">Voce</option>
+                                        <option value="tastiera">Tastiera</option>
+                                        <option value="fiati">Fiati (Sax, Tromba, ecc.)</option>
+                                        <option value="archi">Archi (Violino, Violoncello, ecc.)</option>
+                                        <option value="percussioni">Percussioni</option>
+                                        <option value="altro">Altro</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="experienceAdvanced" class="form-label">Anni di Esperienza</label>
+                                    <input type="number" class="form-control" id="experienceAdvanced" name="experience"
+                                        min="0" max="50" placeholder="Es. 5">
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </form>
+
+                        <div id="bandFieldsContainer" style="display:none;">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-12">
+                                    <label for="lookingForAdvanced" class="form-label">Strumento/Ruolo Cercato (per
+                                        Band)</label>
+                                    <input type="text" class="form-control" id="lookingForAdvanced" name="looking_for"
+                                        placeholder="Es. Chitarrista, Cantante">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="button" class="btn btn-secondary-custom me-2" id="resetAdvancedSearch">Annulla
+                                Filtri</button>
+                            <button type="button" class="btn btn-primary-custom" id="applyAdvancedSearch">Applica
+                                Ricerca Avanzata</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Results Section -->
-    <section class="results-section">
+    <section class="results-section py-5 bg-light">
         <div class="container">
-            <h2 class="text-center mb-4">Risultati della Ricerca</h2>
-            <div id="resultsContainer"></div>
-        </div>
-    </section>
-
-    <!-- Recommended Bands Section -->
-    <section class="recommended-section">
-        <div class="container">
-            <h2 class="text-center mb-4">Band Consigliate</h2>
-            <div class="row">
-                <!-- Band Card 1 -->
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top" alt="The Rockers">
-                        <div class="card-body">
-                            <h5 class="card-title">The Rockers</h5>
-                            <p class="card-text">Genere: Rock</p>
-                            <p class="card-text">Località: Milano</p>
-                            <a href="#" class="btn btn-primary">Visualizza Profilo</a>
-                        </div>
-                    </div>
-                </div>
-                <!-- Band Card 2 -->
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top" alt="Jazz Ensemble">
-                        <div class="card-body">
-                            <h5 class="card-title">Jazz Ensemble</h5>
-                            <p class="card-text">Genere: Jazz</p>
-                            <p class="card-text">Località: Roma</p>
-                            <a href="#" class="btn btn-primary">Visualizza Profilo</a>
-                        </div>
-                    </div>
-                </div>
-                <!-- Band Card 3 -->
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top" alt="Electro Beats">
-                        <div class="card-body">
-                            <h5 class="card-title">Electro Beats</h5>
-                            <p class="card-text">Genere: Elettronica</p>
-                            <p class="card-text">Località: Torino</p>
-                            <a href="#" class="btn btn-primary">Visualizza Profilo</a>
-                        </div>
-                    </div>
-                </div>
+            <h2 class="text-center mb-5">Risultati della Ricerca</h2>
+            <div id="resultsContainer" class="row gy-4">
+                <!-- I risultati verranno inseriti qui da JavaScript -->
+                <p class="text-center text-muted" id="noResultsMessage" style="display: block;">Effettua una ricerca per
+                    visualizzare i risultati.</p>
             </div>
         </div>
     </section>
+
 
     <!-- Footer -->
     <footer>
@@ -273,21 +361,177 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const toggleButton = document.getElementById('toggleAdvanced');
-            const advancedSearch = document.getElementById('advancedSearch');
-    
-            toggleButton.addEventListener('click', function () {
-                if (advancedSearch.style.display === 'none' || advancedSearch.style.display === '') {
-                    advancedSearch.style.display = 'block';
-                    toggleButton.textContent = 'Nascondi Ricerca Avanzata';
+            const advancedSearchPanel = document.getElementById('advancedSearchPanel');
+            const searchTypeBandAdvanced = document.getElementById('searchTypeBandAdvanced');
+            const searchTypeMusicianAdvanced = document.getElementById('searchTypeMusicianAdvanced');
+            const musicianFieldsContainer = document.getElementById('musicianFieldsContainer');
+            const bandFieldsContainer = document.getElementById('bandFieldsContainer');
+            const genreField = document.getElementById('genreField');
+            const applyAdvancedSearchButton = document.getElementById('applyAdvancedSearch');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            const resetAdvancedSearchButton = document.getElementById('resetAdvancedSearch');
+            const searchButtonMain = document.getElementById('searchButtonMain');
+            const searchQueryMainInput = document.getElementById('searchQueryMain');
+
+            function toggleAdvancedFields() {
+                if (searchTypeMusicianAdvanced.checked) {
+                    musicianFieldsContainer.style.display = 'block';
+                    bandFieldsContainer.style.display = 'none';
+                    genreField.style.display = 'block';
                 } else {
-                    advancedSearch.style.display = 'none';
-                    toggleButton.textContent = 'Ricerca Avanzata';
+                    musicianFieldsContainer.style.display = 'none';
+                    bandFieldsContainer.style.display = 'block';
+                    genreField.style.display = 'block';
+                }
+            }
+
+            toggleButton.addEventListener('click', function () {
+                if (advancedSearchPanel.style.display === 'none' || advancedSearchPanel.style.display === '') {
+                    advancedSearchPanel.style.display = 'block';
+                    toggleButton.textContent = 'Nascondi Ricerca Avanzata';
+                    toggleAdvancedFields();
+                } else {
+                    advancedSearchPanel.style.display = 'none';
+                    toggleButton.textContent = 'Mostra Ricerca Avanzata';
                 }
             });
+
+            searchTypeBandAdvanced.addEventListener('change', toggleAdvancedFields);
+            searchTypeMusicianAdvanced.addEventListener('change', toggleAdvancedFields);
+
+            async function performSearch(isAdvancedSearch = false) {
+                let queryParams = {};
+                const url = '/api/search/advanced';
+
+                if (isAdvancedSearch) {
+                    queryParams.type = document.querySelector('input[name="searchTypeAdvanced"]:checked').value;
+                    queryParams.location = document.getElementById('locationAdvanced').value.trim();
+                    queryParams.genre = document.getElementById('genreAdvanced').value;
+
+                    if (queryParams.type === 'musician') {
+                        queryParams.instrument = document.getElementById('instrumentAdvanced').value;
+                        const experienceVal = document.getElementById('experienceAdvanced').value;
+                        queryParams.experience = experienceVal ? experienceVal : ''; // Invia come stringa, il backend gestirà la conversione se necessario
+                    } else {
+                        queryParams.instrument = document.getElementById('lookingForAdvanced').value.trim();
+                    }
+                } else {
+                    const mainQuery = searchQueryMainInput.value.trim();
+                    if (mainQuery) {
+                        queryParams.q = mainQuery;
+                        // Opzionale: se si vuole restringere la ricerca testuale per tipo quando il pannello avanzato è aperto e un tipo è selezionato
+                        // if (advancedSearchPanel.style.display === 'block') {
+                        //    queryParams.type = document.querySelector('input[name="searchTypeAdvanced"]:checked').value;
+                        // }
+                    } else {
+                        // Se la query principale è vuota, non fare nulla o mostra un messaggio
+                        noResultsMessage.innerHTML = "Inserisci un termine di ricerca.";
+                        noResultsMessage.style.display = 'block';
+                        resultsContainer.innerHTML = '';
+                        return;
+                    }
+                }
+
+                Object.keys(queryParams).forEach(key => {
+                    if (queryParams[key] === '' || queryParams[key] === null || queryParams[key] === undefined) {
+                        delete queryParams[key];
+                    }
+                });
+
+                const queryString = new URLSearchParams(queryParams).toString();
+
+                try {
+                    const response = await fetch(`${url}?${queryString}`);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `Errore HTTP: ${response.status}`);
+                    }
+                    const results = await response.json();
+                    displayResults(results);
+                } catch (error) {
+                    console.error('Errore durante la ricerca:', error);
+                    resultsContainer.innerHTML = `<p class="text-center text-danger">Si è verificato un errore: ${error.message}</p>`;
+                    noResultsMessage.style.display = 'none';
+                }
+            }
+
+            function displayResults(results) {
+                resultsContainer.innerHTML = '';
+                if (results && results.length > 0) {
+                    noResultsMessage.style.display = 'none';
+                    results.forEach(item => {
+                        // Placeholder per l'immagine, da sostituire con un campo immagine reale se disponibile
+                        let imageUrl = `https://source.unsplash.com/random/400x225/?${item.userType === 'band' ? item.genre || 'music' : item.instrument || 'musician'}&sig=${Math.random()}`;
+                        if (item.profile_image_url) { // Assumendo un campo profile_image_url
+                            imageUrl = item.profile_image_url;
+                        }
+
+                        const card = `
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100">
+                                    <img src="${imageUrl}" class="card-img-top" alt="${item.full_name || 'Profilo'}">
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title">${item.full_name || 'Nome non disponibile'}</h5>
+                                        <p class="card-text mb-1"><small class="text-muted">Tipo: ${item.userType === 'band' ? 'Band' : 'Musicista'}</small></p>
+                                        <p class="card-text mb-1">Località: ${item.location || 'Non specificata'}</p>
+                                        ${item.userType === 'band' ?
+                                `<p class="card-text mb-1">Genere: ${item.genre || 'Non specificato'}</p>
+                                             <p class="card-text mb-1">Cerca: ${item.looking_for || 'Non specificato'}</p>` : ''}
+                                        ${item.userType === 'musician' ?
+                                `<p class="card-text mb-1">Strumento: ${item.instrument || 'Non specificato'}</p>
+                                             <p class="card-text mb-1">Esperienza: ${item.experience || 'Non specificata'} ${item.experience ? (item.experience === '1' ? 'anno' : 'anni') : ''}</p>` : ''}
+                                        
+                                        <!-- Pulsante Visualizza Profilo -->
+                                        <a href="/profilo/${item.user_id}" class="btn btn-primary-custom mt-auto align-self-start view-profile-btn" data-userid="${item.user_id}">Visualizza Profilo</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        resultsContainer.insertAdjacentHTML('beforeend', card);
+                    });
+                } else {
+                    noResultsMessage.textContent = 'Nessun risultato trovato. Prova a modificare i criteri di ricerca.';
+                    noResultsMessage.style.display = 'block';
+                }
+            }
+
+            applyAdvancedSearchButton.addEventListener('click', () => performSearch(true));
+
+            resetAdvancedSearchButton.addEventListener('click', () => {
+                document.getElementById('advancedSearchForm').reset();
+                searchTypeBandAdvanced.checked = true;
+                toggleAdvancedFields();
+                resultsContainer.innerHTML = '';
+                noResultsMessage.textContent = 'Effettua una ricerca per visualizzare i risultati.';
+                noResultsMessage.style.display = 'block';
+            });
+
+            searchButtonMain.addEventListener('click', () => {
+                const query = searchQueryMainInput.value.trim();
+                if (!query) {
+                    noResultsMessage.textContent = 'Inserisci un nome da cercare.';
+                    noResultsMessage.style.display = 'block';
+                    resultsContainer.innerHTML = '';
+                    return;
+                }
+                // Chiamata all’endpoint senza filtri
+                fetch(`/cercaUtenti?name=${encodeURIComponent(query)}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Errore HTTP: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => displayResults(data))
+                    .catch(err => {
+                        console.error('Errore nella ricerca:', err);
+                        resultsContainer.innerHTML =
+                            `<p class="text-center text-danger">Errore nella ricerca: ${err.message}</p>`;
+                        noResultsMessage.style.display = 'none';
+                    });
+            });
+            
         });
     </script>
-    
-    <!-- Custom JavaScript -->
-    <script src="script.js"></script>
 </body>
+
 </html>

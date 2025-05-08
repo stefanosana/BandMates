@@ -1,7 +1,6 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
-const cors = require('cors');
 const hbs = require("handlebars");
 const path = require('path');
 require('dotenv').config();
@@ -16,9 +15,14 @@ require('dotenv').config();
 const passport = require('passport');
 const socketIo = require('socket.io');
 const http = require('http');
-const WebSocket = require('ws');
 const server = http.createServer(app);
-const io = socketIo(server);
+
+const port = 3000; // Usa la tua porta definita
+const httpServerInstance = app.listen(port, () => {
+    console.log(`Server Express in ascolto http://localhost:${port}`);
+});
+
+const io = socketIo(httpServerInstance);
 
 
 app.use(session({
@@ -39,9 +43,6 @@ app.use(session({
     }
 }));
 
-//const mock = require('./DBMock.js');
-//const db = new mock();
-const port = 3000;
 app.set('view engine', 'hbs')
 
 //app.use(cors(corsOptions));
@@ -217,14 +218,126 @@ app.get('/session-user', (req, res) => {
     }
 });
 
-function ensureAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) {
+function ensureUserIsAuthenticated(req, res, next) {
+    if (req.session.loggedIn && req.session.user_id) {
         return next();
     }
-    res.redirect('/login');
+    res.status(401).redirect("/login.html?message=Devi effettuare l'accesso per visualizzare questa pagina.");
 }
 
 
+
+/**
+ * @swagger
+ * /api/search/advanced:
+ *   get:
+ *     summary: Ricerca avanzata di musicisti e band
+ *     description: Restituisce musicisti o band in base ai filtri forniti.
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [musician, band]
+ *         required: true
+ *         description: Tipo di ricerca (musicista o band).
+ *       - in: query
+ *         name: location
+ *         schema:
+ *           type: string
+ *         description: Località (es. Milano).
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *         description: Genere musicale.
+ *       - in: query
+ *         name: instrument
+ *         schema:
+ *           type: string
+ *         description: Strumento musicale (solo per musicisti).
+ *       - in: query
+ *         name: experience
+ *         schema:
+ *           type: string
+ *         description: Anni di esperienza (solo per musicisti, es. "5" o "5+").
+ *     responses:
+ *       200:
+ *         description: Risultati della ricerca.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       400:
+ *         description: Parametro 'type' mancante o non valido.
+ *       500:
+ *         description: Errore interno del server.
+ */
+app.get('/api/search/advanced', (req, res) => {
+    const { type, location, genre, instrument, experience } = req.query;
+
+    if (!type || (type !== 'musician' && type !== 'band')) {
+        return res.status(400).json({ error: "Il parametro 'type' è obbligatorio e deve essere 'musician' o 'band'." });
+    }
+
+    let query_select_base = '';
+    let query_from_join = '';
+    let query_conditions = ' WHERE 1=1 ';
+    const params = [];
+
+    if (type === 'musician') {
+        query_select_base = `SELECT U.user_id, U.full_name, U.email, U.location, U.userType, M.instrument, M.experience, M.description AS musician_description`;
+        query_from_join = `FROM USERS U JOIN MUSICIANS M ON U.user_id = M.user_id`;
+        query_conditions += ` AND U.userType = 'musician'`;
+
+        if (location) {
+            query_conditions += ' AND U.location LIKE ?';
+            params.push(`%${location}%`);
+        }
+        if (instrument) {
+            query_conditions += ' AND M.instrument LIKE ?';
+            params.push(`%${instrument}%`);
+        }
+        if (experience) {
+            query_conditions += ' AND M.experience LIKE ?'; 
+            params.push(`%${experience}%`);
+        }
+        if (genre) {
+            query_conditions += ' AND (M.description LIKE ?)';
+            params.push(`%${genre}%`);
+        }
+
+    } else if (type === 'band') {
+        query_select_base = `SELECT U.user_id, U.full_name, U.email, U.location, U.userType, B.genre, B.description AS band_description, B.looking_for`;
+        query_from_join = `FROM USERS U JOIN BANDS B ON U.user_id = B.user_id`;
+        query_conditions += ` AND U.userType = 'band'`;
+
+        if (location) {
+            query_conditions += ' AND U.location LIKE ?';
+            params.push(`%${location}%`);
+        }
+        if (genre) {
+            query_conditions += ' AND B.genre LIKE ?';
+            params.push(`%${genre}%`);
+        }
+        if (instrument) {
+            query_conditions += ' AND B.looking_for LIKE ?';
+            params.push(`%${instrument}%`);
+        }
+    }
+
+    const final_query = query_select_base + ' ' + query_from_join + ' ' + query_conditions;
+
+    db.all(final_query, params, (err, rows) => {
+        if (err) {
+            console.error('Errore durante la ricerca avanzata:', err.message);
+            return res.status(500).json({ error: 'Errore interno del server durante la ricerca.' });
+        }
+        res.json(rows);
+    });
+});
 
 /**
  * @swagger
@@ -763,56 +876,140 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-/**
- * @swagger
- * /area-personale:
- *   get:
- *     summary: Visualizza l'area personale dell'utente.
- *     description: Se l'utente è autenticato, viene mostrata l'area personale. Se l'utente è un admin, viene reindirizzato alla dashboard dell'admin. Se l'utente non è autenticato, viene reindirizzato alla pagina di login.
- *     responses:
- *       200:
- *         description: Area personale visualizzata con successo.
- *         content:
- *           text/html:
- *             schema:
- *               type: string
- *               description: Contenuto HTML dell'area personale.
- *       302:
- *         description: Reindirizzamento alla pagina di login per utenti non autenticati.
- *         headers:
- *           Location:
- *             description: URL della pagina di login.
- *             schema:
- *               type: string
- *               example: /login
- *       302:
- *         description: Reindirizzamento alla dashboard dell'admin per utenti con ruolo "admin".
- *         headers:
- *           Location:
- *             description: URL della dashboard dell'admin.
- *             schema:
- *               type: string
- *               example: /admin/dashboard
- */
-app.get('/area-personale', (req, res) => {
-    // Verifica se l'utente è autenticato
-    if (!req.session.loggedIn) {
-        return res.redirect('/login');
-    }
+app.get("/area-personale", ensureUserIsAuthenticated, (req, res) => {
+    const userId = req.session.user_id;
+    // Recuperiamo i dati dell'utente loggato per passarli al template
+    let query = `
+        SELECT U.user_id, U.full_name, U.email, U.location, U.userType, U.profile_image_url,
+               M.instrument, M.experience, M.description AS musician_description,
+               B.genre, B.description AS band_description, B.looking_for
+        FROM USERS U
+        LEFT JOIN MUSICIANS M ON U.user_id = M.user_id AND U.userType = 'musician'
+        LEFT JOIN BANDS B ON U.user_id = B.user_id AND U.userType = 'band'
+        WHERE U.user_id = ?;
+    `;
 
-    if (req.session.role === 'admin') {
-        return res.redirect('/admin/dashboard');
-    }
+    db.get(query, [userId], (err, row) => {
+        if (err) {
+            console.error("Errore nel caricare i dati per /area-personale:", err.message);
+            // Potresti voler renderizzare una pagina di errore specifica o reindirizzare
+            return res.status(500).render("error", { message: "Impossibile caricare la tua area personale al momento." });
+        }
+        if (!row) {
+            // Questo caso dovrebbe essere raro se ensureUserIsAuthenticated funziona correttamente e l'utente esiste
+            return res.status(404).render("error", { message: "Informazioni utente non trovate." });
+        }
 
-    // Renderizza la vista dell'area personale
-    res.render('areapersonale', {
-        title: 'Area Personale',
-        loggedIn: true,
-        full_name: req.session.full_name,
-        userType: req.session.userType,
-        role: req.session.role
+        const userProfile = {
+            user_id: row.user_id,
+            full_name: row.full_name,
+            email: row.email,
+            location: row.location,
+            userType: row.userType,
+            profile_image_url: row.profile_image_url,
+            description: row.userType === 'musician' ? row.musician_description : row.band_description,
+            instrument: row.instrument,
+            experience: row.experience,
+            genre: row.genre,
+            looking_for: row.looking_for
+        };
+
+        res.render("area_personale", {
+            layout: false, // Assumendo che non ci sia un layout hbs globale
+            user: userProfile,
+            title: "Area Personale",
+            loggedInUser: { user_id: req.session.user_id, full_name: req.session.full_name } // Per la navbar, se necessario
+        });
     });
+});
 
+// Route per visualizzare la pagina del profilo utente
+app.get("/profilo/:userId", (req, res) => {
+    const userId = req.params.userId;
+    const loggedInUser = req.session.loggedIn ? { user_id: req.session.user_id, full_name: req.session.full_name } : null;
+    
+    // Chiamata all'API interna per ottenere i dati dell'utente
+    // In un'architettura più complessa, potresti avere un service layer
+    // Per ora, chiamiamo direttamente la logica del DB come nell'API endpoint
+    let query = `
+        SELECT U.user_id, U.full_name, U.email, U.location, U.userType,
+               M.instrument, M.experience, M.description AS musician_description,
+               B.genre, B.description AS band_description, B.looking_for
+        FROM USERS U
+        LEFT JOIN MUSICIANS M ON U.user_id = M.user_id AND U.userType = 'musician'
+        LEFT JOIN BANDS B ON U.user_id = B.user_id AND U.userType = 'band'
+        WHERE U.user_id = ?;
+    `;
+
+    db.get(query, [userId], (err, row) => {
+        if (err) {
+            console.error("Errore durante il recupero dei dati per la pagina profilo:", err.message);
+            return res.status(500).render("error", { message: "Errore nel caricamento del profilo." });
+        }
+        if (!row) {
+            return res.status(404).render("error", { message: "Profilo non trovato." });
+        }
+
+        const userProfile = {
+            user_id: row.user_id,
+            full_name: row.full_name,
+            email: row.email, // Valuta se mostrare l'email
+            location: row.location,
+            userType: row.userType,
+            profile_image_url: row.profile_image_url,
+            description: row.userType === 'musician' ? row.musician_description : row.band_description,
+            instrument: row.instrument,
+            experience: row.experience,
+            genre: row.genre,
+            looking_for: row.looking_for
+        };
+        
+        res.render("profilo_utente", { 
+            layout: false, // Se non usi un layout di default per tutte le pagine hbs
+            user: userProfile, 
+            loggedInUser: loggedInUser, // Passa info sull'utente loggato per la navbar
+            title: `Profilo di ${userProfile.full_name}`
+        });
+    });
+});
+
+app.get("/api/user/:userId", (req, res) => {
+    const userId = req.params.userId;
+    let query = `
+        SELECT U.user_id, U.full_name, U.email, U.location, U.userType, U.profile_image_url,
+               M.instrument, M.experience, M.description AS musician_description,
+               B.genre, B.description AS band_description, B.looking_for
+        FROM USERS U
+        LEFT JOIN MUSICIANS M ON U.user_id = M.user_id AND U.userType = 'musician'
+        LEFT JOIN BANDS B ON U.user_id = B.user_id AND U.userType = 'band'
+        WHERE U.user_id = ?;
+    `;
+
+    db.get(query, [userId], (err, row) => {
+        if (err) {
+            console.error("Errore durante il recupero del profilo utente:", err.message);
+            return res.status(500).json({ error: "Errore interno del server." });
+        }
+        if (!row) {
+            return res.status(404).json({ error: "Utente non trovato." });
+        }
+
+        // Unifichiamo la descrizione
+        const userProfile = {
+            user_id: row.user_id,
+            full_name: row.full_name,
+            email: row.email, // Considerare se esporre l'email pubblicamente
+            location: row.location,
+            userType: row.userType,
+            profile_image_url: row.profile_image_url,
+            description: row.userType === 'musician' ? row.musician_description : row.band_description,
+            instrument: row.instrument,
+            experience: row.experience,
+            genre: row.genre,
+            looking_for: row.looking_for
+        };
+        res.json(userProfile);
+    });
 });
 
 /**
@@ -981,6 +1178,48 @@ app.get('/admin/feedback', (req, res) => {
     }
 });
 
+app.get('/cercaUtenti', (req, res) => {
+    const { name } = req.query;
+    if (!name) {
+      return res.status(400).json({ error: "Il parametro 'name' è obbligatorio" });
+    }
+  
+    const searchTerm = `%${name}%`;
+    const sql = `
+      SELECT
+        U.user_id,
+        U.full_name,
+        U.location,
+        U.userType,
+        M.instrument,
+        M.experience,
+        M.description   AS musician_description,
+        B.genre,
+        B.looking_for,
+        B.description   AS band_description
+      FROM USERS U
+      LEFT JOIN MUSICIANS M
+        ON U.user_id = M.user_id
+        AND U.userType = 'musician'
+      LEFT JOIN BANDS B
+        ON U.user_id = B.user_id
+        AND U.userType = 'band'
+      WHERE U.full_name LIKE ?
+    `;
+  
+    db.all(sql, [searchTerm], (err, rows) => {
+      if (err) {
+        console.error("Errore in /cercaUtenti:", err.message);
+        return res.status(500).json({ error: "Errore interno del server" });
+      }
+      // rows è un array di oggetti con:
+      // { user_id, full_name, location, userType,
+      //   instrument, experience, musician_description,
+      //   genre, looking_for, band_description }
+      res.json(rows);
+    });
+  });
+
 /**
  * @swagger
  * /home:
@@ -1090,29 +1329,6 @@ app.delete('/admin/delete-user/:id', isAdmin, (req, res) => {
             console.error('Errore nell\'iniziare la transazione:', err);
             return res.status(500).json({ error: 'Errore del server' });
         }
-
-        /*
-        // Prima elimina tutti i messaggi dell'utente
-        db.run('DELETE FROM MESSAGES WHERE sender_id = ? OR receiver_id = ?', [id, id], (err) => {
-            if (err) {
-                console.error('Errore nell\'eliminazione dei messaggi:', err);
-                return db.run('ROLLBACK', () => {
-                    res.status(500).json({ error: 'Errore nell\'eliminazione dei messaggi' });
-                });
-            } */
-
-
-        /*
-                    // Poi elimina tutte le chat room dell'utente
-                    db.run('DELETE FROM CHAT_ROOMS WHERE sender_id = ? OR receiver_id = ?', [id, id], (err) => {
-                        if (err) {
-                            console.error('Errore nell\'eliminazione delle chat room:', err);
-                            return db.run('ROLLBACK', () => {
-                                res.status(500).json({ error: 'Errore nell\'eliminazione delle chat room' });
-                            });
-                        } */
-
-        // Infine elimina l'utente
         db.run('DELETE FROM USERS WHERE user_id = ?', [id], function (err) {
             if (err) {
                 console.error('Errore nell\'eliminazione dell\'utente:', err);
@@ -1226,24 +1442,26 @@ app.post('/chat/start', async (req, res) => {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //WEB SOCKET CONTATORE
-let onlineUsers = 0;
+let visitorCount = 0;
 
-// Gestione WebSocket
-io.on('connection', (socket) => {
-    // Incrementa contatore quando un utente si connette
-    onlineUsers++;
-    // Invia aggiornamento a tutti i client
-    io.emit('userCount', onlineUsers);
+io.on("connection", (socket) => {
+    visitorCount++;
+    console.log(`BACKEND LOG: Nuovo utente connesso. Conteggio attuale: ${visitorCount}`);
+    console.log(`BACKEND LOG: Sto per emettere 'updateVisitorCount' con valore: ${visitorCount}`);
+    io.emit("updateVisitorCount", visitorCount); // Assicurati che questa 'io' sia quella inizializzata correttamente
+    console.log(`BACKEND LOG: Evento 'updateVisitorCount' emesso con valore: ${visitorCount}`);
 
-    console.log('Nuovo utente connesso. Utenti online:', onlineUsers);
-
-    // Quando un utente si disconnette
-    socket.on('disconnect', () => {
-        onlineUsers--;
-        io.emit('userCount', onlineUsers);
-        console.log('Utente disconnesso. Utenti online:', onlineUsers);
+    socket.on("disconnect", () => {
+        if (visitorCount > 0) {
+            visitorCount--;
+        }
+        console.log(`BACKEND LOG: Utente disconnesso. Conteggio attuale: ${visitorCount}`);
+        console.log(`BACKEND LOG: Sto per emettere 'updateVisitorCount' (dopo disconnessione) con valore: ${visitorCount}`);
+        io.emit("updateVisitorCount", visitorCount);
+        console.log(`BACKEND LOG: Evento 'updateVisitorCount' (dopo disconnessione) emesso con valore: ${visitorCount}`);
     });
 });
+
 
 //------------------------------------------------------------------------| API Terze Parti |------------------------------------------------------------------------------------------
 app.get('/marketplace', (req, res) => {
@@ -1263,6 +1481,4 @@ app.get('/marketplace', (req, res) => {
 module.exports = app;
 app.use(express.static('public'));
 // Avvio del server
-app.listen(port, () => {
-    console.log(`Server in ascolto sulla porta ${port}: ${"http://localhost:" + port}`);
-});
+
