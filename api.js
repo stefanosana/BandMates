@@ -1,7 +1,7 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
-const hbs = require("handlebars");
+const hbs = require("hbs");
 const path = require('path');
 require('dotenv').config();
 const bodyParser = require('body-parser');
@@ -25,6 +25,15 @@ const httpServerInstance = app.listen(port, () => {
 const io = socketIo(httpServerInstance);
 
 
+hbs.registerHelper("eq", function (a, b) {
+    return a === b;
+});
+
+hbs.registerHelper("neq", function (a, b) {
+    return a !== b;
+});
+
+
 app.use(session({
     secret: 'tuoSegretoSuperSicuro',
     resave: false,  // Aggiunto per evitare il warning
@@ -43,6 +52,7 @@ app.use(session({
     }
 }));
 
+app.set("views", path.join(__dirname, "views"));
 app.set('view engine', 'hbs')
 
 //app.use(cors(corsOptions));
@@ -224,8 +234,6 @@ function ensureUserIsAuthenticated(req, res, next) {
     }
     res.status(401).redirect("/login.html?message=Devi effettuare l'accesso per visualizzare questa pagina.");
 }
-
-
 
 /**
  * @swagger
@@ -1088,82 +1096,6 @@ app.get('/admin/users', (req, res) => {
     }
 });
 
-app.get('/admin/users/edit/:id', (req, res) => {
-    if (req.session.role === 'admin') {
-        const { id } = req.params;
-
-        db.get(
-            `SELECT 'musician' AS userType, musician_id AS id, full_name, email FROM musicians WHERE musician_id = ?
-             UNION
-             SELECT 'band' AS userType, band_id AS id, full_name, email FROM bands WHERE band_id = ?`,
-            [id, id],
-            (err, row) => {
-                if (err || !row) return res.status(404).send('Utente non trovato');
-                res.render('admin/editUser', { user: row });
-            }
-        );
-    } else {
-        res.status(403).send('Accesso negato');
-    }
-});
-
-app.post('/admin/users/edit/:id', (req, res) => {
-    const { id } = req.params;
-    const { fullName, email, userType } = req.body;
-
-    if (!fullName || !email) {
-        return res.status(400).send('Tutti i campi sono obbligatori.');
-    }
-
-    const updateQuery = userType === 'musician'
-        ? `UPDATE musicians SET full_name = ?, email = ? WHERE musician_id = ?`
-        : `UPDATE bands SET full_name = ?, email = ? WHERE band_id = ?`;
-
-    db.run(updateQuery, [fullName, email, id], (err) => {
-        if (err) return res.status(500).send('Errore nella modifica');
-        res.redirect('/admin/users');
-    });
-});
-
-app.get('/admin/users/edit/:id', (req, res) => {
-    const userId = req.params.id;
-
-    db.get('SELECT * FROM users WHERE user_id = ?', [userId], (err, user) => {
-        if (err) {
-            console.error('Errore nel recupero dell\'utente:', err);
-            return res.status(500).render('error', { message: 'Errore nel recupero dell\'utente' });
-        }
-
-        if (!user) {
-            return res.status(404).render('error', { message: 'Utente non trovato' });
-        }
-
-        // Renderizza la pagina di modifica con i dati dell'utente
-        res.render('admin/editUser', { user });
-    });
-});
-
-app.post('/admin/users/edit/:id', (req, res) => {
-    const userId = req.params.id;
-    const { full_name, email, userType, location, description } = req.body;
-
-    const updateQuery = `
-        UPDATE users 
-        SET full_name = ?, email = ?, userType = ?, location = ?, description = ? 
-        WHERE user_id = ?
-    `;
-
-    db.run(updateQuery, [full_name, email, userType, location, description, userId], function (err) {
-        if (err) {
-            console.error('Errore nell\'aggiornamento dell\'utente:', err);
-            return res.status(500).render('error', { message: 'Errore nell\'aggiornamento dell\'utente' });
-        }
-
-        // Reindirizza alla pagina di gestione utenti con un messaggio di successo
-        res.redirect('/admin/users?message=Utente aggiornato con successo');
-    });
-});
-
 app.get('/admin/feedback', (req, res) => {
     if (req.session.role === 'admin') {
         // Recupera feedback dal database
@@ -1361,9 +1293,6 @@ app.delete('/admin/delete-user/:id', isAdmin, (req, res) => {
     });
 });
 
-
-
-
 //----------------------------------------------------------------------------------| CHAT |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //endpoint get per visualizzare la chat
 app.get('/chat', (req, res) => {
@@ -1476,9 +1405,5 @@ app.get('/marketplace', (req, res) => {
 });
 
 
-
-
 module.exports = app;
 app.use(express.static('public'));
-// Avvio del server
-
